@@ -26,7 +26,6 @@ type example struct {
   FieldC float64     `cnab:"50,60"`
   FieldD uint        `cnab:"60,70"`
   FieldE bool        `cnab:"70,71"`
-  FieldF bool        `cnab:"71,80"`
 }
 
 func main() {
@@ -36,7 +35,6 @@ func main() {
     FieldC: 50.30,
     FieldD: 445,
     FieldE: true,
-    FieldF: false,
   }
 
   data, err := gocnab.Marshal400(e)
