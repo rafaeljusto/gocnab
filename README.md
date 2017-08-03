@@ -1,0 +1,2 @@
+# gocnab
+CNAB (Un)Marshaler
