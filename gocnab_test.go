@@ -12,6 +12,8 @@ import (
 )
 
 func TestMarshal240(t *testing.T) {
+	t.Parallel()
+
 	scenarios := []struct {
 		description   string
 		v             interface{}
@@ -234,6 +236,8 @@ func TestMarshal240(t *testing.T) {
 }
 
 func TestMarshal400(t *testing.T) {
+	t.Parallel()
+
 	scenarios := []struct {
 		description   string
 		v             interface{}
@@ -455,7 +459,192 @@ func TestMarshal400(t *testing.T) {
 	}
 }
 
+func TestUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		description   string
+		data          []byte
+		v             interface{}
+		expected      interface{}
+		expectedError error
+	}{
+		{
+			description: "it should unmarshal to a struct correctly",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			v: &struct {
+				FieldA int         `cnab:"0,20"`
+				FieldB string      `cnab:"20,50"`
+				FieldC float64     `cnab:"50,60"`
+				FieldD uint        `cnab:"60,70"`
+				FieldE bool        `cnab:"70,71"`
+				FieldF bool        `cnab:"71,80"`
+				FieldG customType3 `cnab:"80,110"`
+				FieldH customType4 `cnab:"110,140"`
+				FieldI time.Time   // should ignore fields without CNAB tag
+			}{},
+			expected: &struct {
+				FieldA int         `cnab:"0,20"`
+				FieldB string      `cnab:"20,50"`
+				FieldC float64     `cnab:"50,60"`
+				FieldD uint        `cnab:"60,70"`
+				FieldE bool        `cnab:"70,71"`
+				FieldF bool        `cnab:"71,80"`
+				FieldG customType3 `cnab:"80,110"`
+				FieldH customType4 `cnab:"110,140"`
+				FieldI time.Time   // should ignore fields without CNAB tag
+			}{
+				FieldA: 123,
+				FieldB: "This is a test with a long tex",
+				FieldC: 50.30,
+				FieldD: 445,
+				FieldE: true,
+				FieldF: false,
+				FieldG: customType3{
+					data: "This is a custom type test 1",
+				},
+				FieldH: customType4{
+					data: "This is a custom type test 2",
+				},
+			},
+		},
+		{
+			description: "it should unmarshal to a slice of structs correctly",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s\n%020d%30s%10s%010d0        1%30s%30s%100s\n",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "",
+				321, "This is another test", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "This is a custom type test 3", "This is a custom type test 4", "")),
+			v: &[]struct {
+				FieldA int         `cnab:"0,20"`
+				FieldB string      `cnab:"20,50"`
+				FieldC float64     `cnab:"50,60"`
+				FieldD uint        `cnab:"60,70"`
+				FieldE bool        `cnab:"70,71"`
+				FieldF bool        `cnab:"71,80"`
+				FieldG customType3 `cnab:"80,110"`
+				FieldH customType4 `cnab:"110,140"`
+				FieldI time.Time   // should ignore fields without CNAB tag
+			}{},
+			expected: &[]struct {
+				FieldA int         `cnab:"0,20"`
+				FieldB string      `cnab:"20,50"`
+				FieldC float64     `cnab:"50,60"`
+				FieldD uint        `cnab:"60,70"`
+				FieldE bool        `cnab:"70,71"`
+				FieldF bool        `cnab:"71,80"`
+				FieldG customType3 `cnab:"80,110"`
+				FieldH customType4 `cnab:"110,140"`
+				FieldI time.Time   // should ignore fields without CNAB tag
+			}{
+				{
+					FieldA: 123,
+					FieldB: "This is a test with a long tex",
+					FieldC: 50.30,
+					FieldD: 445,
+					FieldE: true,
+					FieldF: false,
+					FieldG: customType3{
+						data: "This is a custom type test 1",
+					},
+					FieldH: customType4{
+						data: "This is a custom type test 2",
+					},
+				},
+				{
+					FieldA: 321,
+					FieldB: "This is another test",
+					FieldC: 30.50,
+					FieldD: 644,
+					FieldE: false,
+					FieldF: true,
+					FieldG: customType3{
+						data: "This is a custom type test 3",
+					},
+					FieldH: customType4{
+						data: "This is a custom type test 4",
+					},
+				},
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.description, func(t *testing.T) {
+			err := gocnab.Unmarshal(scenario.data, scenario.v)
+
+			if !reflect.DeepEqual(scenario.expected, scenario.v) {
+				t.Errorf("expected data “%#v” and got “%#v”", scenario.expected, scenario.v)
+			}
+
+			if !reflect.DeepEqual(scenario.expectedError, err) {
+				t.Errorf("expected error “%v” and got “%v”", scenario.expectedError, err)
+			}
+		})
+	}
+}
+
+func TestMarshalUnmarshal(t *testing.T) {
+	type testType struct {
+		FieldA int         `cnab:"0,20"`
+		FieldB string      `cnab:"20,50"`
+		FieldC float64     `cnab:"50,60"`
+		FieldD uint        `cnab:"60,70"`
+		FieldE bool        `cnab:"70,71"`
+		FieldF bool        `cnab:"71,80"`
+		FieldG customType3 `cnab:"80,110"`
+		FieldH customType4 `cnab:"110,140"`
+		FieldI time.Time   // should ignore fields without CNAB tag
+	}
+
+	input := []testType{
+		{
+			FieldA: 123,
+			FieldB: "This is a test",
+			FieldC: 50.30,
+			FieldD: 445,
+			FieldE: true,
+			FieldF: false,
+			FieldG: customType3{
+				data: "This is a custom type test 1",
+			},
+			FieldH: customType4{
+				data: "This is a custom type test 2",
+			},
+		},
+		{
+			FieldA: 321,
+			FieldB: "This is another test",
+			FieldC: 30.50,
+			FieldD: 644,
+			FieldE: false,
+			FieldF: true,
+			FieldG: customType3{
+				data: "This is a custom type test 3",
+			},
+			FieldH: customType4{
+				data: "This is a custom type test 4",
+			},
+		},
+	}
+
+	data, err := gocnab.Marshal400(input)
+	if err != nil {
+		t.Fatalf("error marshalling. details: %s", err)
+	}
+
+	var output []testType
+	if err = gocnab.Unmarshal(data, &output); err != nil {
+		t.Fatalf("error unmarshalling. details: %s", err)
+	}
+
+	if !reflect.DeepEqual(input, output) {
+		t.Errorf("expected data “%#v” and got “%#v”", input, output)
+	}
+}
+
 func TestFieldError_Error(t *testing.T) {
+	t.Parallel()
+
 	scenarios := []struct {
 		description string
 		err         gocnab.FieldError
@@ -499,4 +688,32 @@ type customType2 func() ([]byte, error)
 
 func (c customType2) MarshalText() ([]byte, error) {
 	return c()
+}
+
+type customType3 struct {
+	data string
+	err  error
+}
+
+func (c customType3) MarshalCNAB() ([]byte, error) {
+	return []byte(c.data), c.err
+}
+
+func (c *customType3) UnmarshalCNAB(data []byte) error {
+	c.data = strings.TrimSpace(string(data))
+	return c.err
+}
+
+type customType4 struct {
+	data string
+	err  error
+}
+
+func (c *customType4) UnmarshalText(data []byte) error {
+	c.data = strings.TrimSpace(string(data))
+	return c.err
+}
+
+func (c customType4) MarshalCNAB() ([]byte, error) {
+	return []byte(c.data), c.err
 }
