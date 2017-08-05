@@ -1,0 +1,29 @@
+language: go
+
+go:
+  - tip
+
+env:
+  global:
+    - secure: "au/UqlApdETXlW5yD8TeHYfDEC1yOcdesqfbsIgUfVIDmrETk+en5oMLnYqgCE07ouCIssQK8nw+ZLRhRp+ukK1My3DRx+pJ1izf1l3qG8w6J84ddnskHuLuALrz1upJwgyMbcsY+pk+3VNPmeFbwUoR4kYUa1AsABMhlQ+wYdkbCrpA3nDls/Y9sTsxwKy59LWpBe/RCqyvpRt2F+qeFsGz1317ogaa7KN7XvMJaFDV06QpCtC2mPKFjcfBW8DtIfsu3InvFQyXRZ+zc33TrFJ/ZH1xAbGT35LU2nPSqq0cr6VBtQgtECqq6DL54F8uEK6QY8ETiqS07MxHgTwCLZHdpWMS+Y2axNrAfjHs0b+DYwBv3QzzQfvxrrT8rrCPCYmIVwlkCPYODAPUAHOEneXixb79M5uDsrY7mbLMaDZlzH+GE754EdRK/yHJBZx8reh5E6evHpF0qVUWyw9QX8F8am+2k31vtuMr1CCOTBGeV+2hHijXTvfl9rLJh0NnPdr/L+B730O8yift5VdrErbVFvnT4yjODzo8U3Q6la4hZMKeBkTgqZEo/eZ3ihh80CNZmRoWr0ZTlwqlkMkj/Ra8rIT+bIu6ee3I2I+Ev0Z9Q5N2d+F1ssX1bJ+nWKELVebMk73Ueoc5bgtsopVVsuQ4PG2Bd6gkjzgguTGgcB0="
+
+install:
+  - go get github.com/mattn/goveralls
+
+script:
+  - >
+    if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+      go test -v -cover;
+    fi
+  - >
+    if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+      go test -v -covermode=count -coverprofile=coverage.out
+      $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN;
+    fi
+
+notifications:
+  email:
+    recipients:
+      - adm@rafael.net.br
+    on_success: change
+    on_failure: always
