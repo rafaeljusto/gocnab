@@ -271,7 +271,7 @@ func unmarshalField(data []byte, v reflect.Value, begin, end int) error {
 	case reflect.Bool:
 		boolNumber, err := strconv.ParseInt(cnabFieldStr, 10, 64)
 		if err != nil {
-			// TODO: error
+			return err
 		}
 
 		v.SetBool(boolNumber == 1)
@@ -280,7 +280,7 @@ func unmarshalField(data []byte, v reflect.Value, begin, end int) error {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		number, err := strconv.ParseInt(cnabFieldStr, 10, 64)
 		if err != nil {
-			// TODO: error
+			return err
 		}
 
 		v.SetInt(number)
@@ -289,7 +289,7 @@ func unmarshalField(data []byte, v reflect.Value, begin, end int) error {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		number, err := strconv.ParseUint(cnabFieldStr, 10, 64)
 		if err != nil {
-			// TODO: error
+			return err
 		}
 
 		v.SetUint(number)
@@ -307,7 +307,7 @@ func unmarshalField(data []byte, v reflect.Value, begin, end int) error {
 
 		number, err := strconv.ParseFloat(string(numberRaw), 64)
 		if err != nil {
-			// TODO: error
+			return err
 		}
 
 		v.SetFloat(number)
