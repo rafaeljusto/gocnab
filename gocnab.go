@@ -92,11 +92,11 @@ func Marshal400(v interface{}) ([]byte, error) {
 	return nil, ErrUnsupportedType
 }
 
-func marshal(cnab []byte, v reflect.Value) error {
+func marshal(data []byte, v reflect.Value) error {
 	structType := v.Type()
 	for i := 0; i < structType.NumField(); i++ {
 		structField := structType.Field(i)
-		begin, end, err := parseCNABFieldTag(structField, len(cnab))
+		begin, end, err := parseCNABFieldTag(structField, len(data))
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func marshal(cnab []byte, v reflect.Value) error {
 			continue
 		}
 
-		if err = marshalField(cnab, v.FieldByName(structField.Name), begin, end); err != nil {
+		if err = marshalField(data, v.FieldByName(structField.Name), begin, end); err != nil {
 			return FieldError{
 				Field: structField.Name,
 				Err:   err,
@@ -117,13 +117,13 @@ func marshal(cnab []byte, v reflect.Value) error {
 	return nil
 }
 
-func marshalField(cnab []byte, v reflect.Value, begin, end int) error {
+func marshalField(data []byte, v reflect.Value, begin, end int) error {
 	cnabFieldSize := end - begin
 
 	switch v.Kind() {
 	case reflect.String:
 		fieldContent := v.Interface().(string)
-		setFieldContent(cnab, fieldContent, begin, end)
+		setFieldContent(data, fieldContent, begin, end)
 		return nil
 
 	case reflect.Bool:
@@ -134,24 +134,24 @@ func marshalField(cnab []byte, v reflect.Value, begin, end int) error {
 		} else {
 			convertedFieldContent = "0"
 		}
-		setFieldContent(cnab, convertedFieldContent, begin, end)
+		setFieldContent(data, convertedFieldContent, begin, end)
 		return nil
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		fieldContent := fmt.Sprintf("%0"+strconv.Itoa(cnabFieldSize)+"d", v.Int())
-		setFieldContent(cnab, fieldContent, begin, end)
+		setFieldContent(data, fieldContent, begin, end)
 		return nil
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		fieldContent := fmt.Sprintf("%0"+strconv.Itoa(cnabFieldSize)+"d", v.Uint())
-		setFieldContent(cnab, fieldContent, begin, end)
+		setFieldContent(data, fieldContent, begin, end)
 		return nil
 
 	case reflect.Float32, reflect.Float64:
 		// replace decimal separator for nothing and add an extra 0 to fill the gap
 		fieldContent := fmt.Sprintf("%0"+strconv.Itoa(cnabFieldSize)+".2f", v.Float())
 		fieldContent = "0" + strings.Replace(fieldContent, ".", "", -1)
-		setFieldContent(cnab, fieldContent, begin, end)
+		setFieldContent(data, fieldContent, begin, end)
 		return nil
 	}
 
@@ -162,7 +162,7 @@ func marshalField(cnab []byte, v reflect.Value, begin, end int) error {
 			return err
 		}
 
-		setFieldContent(cnab, string(fieldContent), begin, end)
+		setFieldContent(data, string(fieldContent), begin, end)
 		return nil
 	}
 
@@ -173,14 +173,14 @@ func marshalField(cnab []byte, v reflect.Value, begin, end int) error {
 			return err
 		}
 
-		setFieldContent(cnab, string(fieldContent), begin, end)
+		setFieldContent(data, string(fieldContent), begin, end)
 		return nil
 	}
 
 	return ErrUnsupportedType
 }
 
-func setFieldContent(cnab []byte, fieldContent string, begin, end int) {
+func setFieldContent(data []byte, fieldContent string, begin, end int) {
 	cnabFieldSize := end - begin
 
 	// strip field if is too big for the space
@@ -190,12 +190,12 @@ func setFieldContent(cnab []byte, fieldContent string, begin, end int) {
 		fieldContent = strings.Repeat(" ", cnabFieldSize-len(fieldContent)) + fieldContent
 	}
 
-	copy(cnab[begin:], fieldContent)
+	copy(data[begin:], fieldContent)
 }
 
 // Unmarshal parses the CNAB-encoded data and stores the result in the value
 // pointed to by v.
-func Unmarshal(cnab []byte, v interface{}) error {
+func Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return ErrUnsupportedType
@@ -205,7 +205,7 @@ func Unmarshal(cnab []byte, v interface{}) error {
 
 	switch rvElem.Kind() {
 	case reflect.Struct:
-		return unmarshal(cnab, rvElem)
+		return unmarshal(data, rvElem)
 
 	case reflect.Slice:
 		sliceType := rvElem.Type().Elem()
@@ -213,7 +213,7 @@ func Unmarshal(cnab []byte, v interface{}) error {
 			return ErrUnsupportedType
 		}
 
-		cnabLines := bytes.Split(cnab, []byte("\n"))
+		cnabLines := bytes.Split(data, []byte("\n"))
 		for _, cnabLine := range cnabLines {
 			if len(cnabLine) == 0 {
 				continue
@@ -233,21 +233,22 @@ func Unmarshal(cnab []byte, v interface{}) error {
 	return ErrUnsupportedType
 }
 
-func unmarshal(cnab []byte, v reflect.Value) error {
+func unmarshal(data []byte, v reflect.Value) error {
 	structType := v.Type()
 	for i := 0; i < structType.NumField(); i++ {
 		structField := structType.Field(i)
-		begin, end, err := parseCNABFieldTag(structField, len(cnab))
+		begin, end, err := parseCNABFieldTag(structField, len(data))
 		if err != nil {
 			return err
 		}
 
-		// ignore fields without range
-		if begin == 0 && end == 0 {
+		// ignore fields without range or not exported
+		field := v.FieldByName(structField.Name)
+		if (begin == 0 && end == 0) || !field.CanSet() {
 			continue
 		}
 
-		if err = unmarshalField(cnab, v.FieldByName(structField.Name), begin, end); err != nil {
+		if err = unmarshalField(data, field, begin, end); err != nil {
 			return FieldError{
 				Field: structField.Name,
 				Err:   err,
@@ -258,12 +259,8 @@ func unmarshal(cnab []byte, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalField(cnab []byte, v reflect.Value, begin, end int) error {
-	if !v.CanSet() {
-		// TODO: error
-	}
-
-	cnabFieldStr := string(cnab[begin:end])
+func unmarshalField(data []byte, v reflect.Value, begin, end int) error {
+	cnabFieldStr := string(data[begin:end])
 	cnabFieldStr = strings.TrimSpace(cnabFieldStr)
 
 	switch v.Kind() {
@@ -320,19 +317,19 @@ func unmarshalField(cnab []byte, v reflect.Value, begin, end int) error {
 	if v.CanAddr() {
 		unmarshalerType := reflect.TypeOf((*Unmarshaler)(nil)).Elem()
 		if v.Addr().Type().Implements(unmarshalerType) {
-			return v.Addr().Interface().(Unmarshaler).UnmarshalCNAB(cnab[begin:end])
+			return v.Addr().Interface().(Unmarshaler).UnmarshalCNAB(data[begin:end])
 		}
 
 		textUnmarshalerType := reflect.TypeOf((*encoding.TextUnmarshaler)(nil)).Elem()
 		if v.Addr().Type().Implements(textUnmarshalerType) {
-			return v.Addr().Interface().(encoding.TextUnmarshaler).UnmarshalText(cnab[begin:end])
+			return v.Addr().Interface().(encoding.TextUnmarshaler).UnmarshalText(data[begin:end])
 		}
 	}
 
 	return ErrUnsupportedType
 }
 
-func parseCNABFieldTag(structField reflect.StructField, cnabSize int) (begin int, end int, err error) {
+func parseCNABFieldTag(structField reflect.StructField, dataSize int) (begin int, end int, err error) {
 	cnabFieldOptionsRaw := structField.Tag.Get("cnab")
 	if cnabFieldOptionsRaw == "" {
 		return 0, 0, nil
@@ -362,7 +359,7 @@ func parseCNABFieldTag(structField reflect.StructField, cnabSize int) (begin int
 		}
 	}
 
-	if begin < 0 || end < begin || end > cnabSize {
+	if begin < 0 || end < begin || end > dataSize {
 		return 0, 0, FieldError{
 			Field: structField.Name,
 			Err:   ErrInvalidFieldTagRange,

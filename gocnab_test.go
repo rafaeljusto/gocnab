@@ -483,6 +483,7 @@ func TestUnmarshal(t *testing.T) {
 				FieldG customType3 `cnab:"80,110"`
 				FieldH customType4 `cnab:"110,140"`
 				FieldI time.Time   // should ignore fields without CNAB tag
+				fieldJ string      `cnab:"140,150"` // should ignore not exported fields
 			}{},
 			expected: &struct {
 				FieldA int         `cnab:"0,20"`
@@ -494,6 +495,7 @@ func TestUnmarshal(t *testing.T) {
 				FieldG customType3 `cnab:"80,110"`
 				FieldH customType4 `cnab:"110,140"`
 				FieldI time.Time   // should ignore fields without CNAB tag
+				fieldJ string      `cnab:"140,150"` // should ignore not exported fields
 			}{
 				FieldA: 123,
 				FieldB: "This is a test with a long tex",
