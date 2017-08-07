@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -690,6 +691,97 @@ func TestUnmarshal(t *testing.T) {
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagRange,
+			},
+		},
+		{
+			description: "it should detect an invalid value to fill a boolean field",
+			data:        []byte(fmt.Sprintf("%1s%399s", "x", "")),
+			v: &struct {
+				FieldA bool `cnab:"0,1"`
+			}{},
+			expected: &struct {
+				FieldA bool `cnab:"0,1"`
+			}{},
+			expectedError: gocnab.UnmarshalFieldError{
+				Field: "FieldA",
+				Data:  []byte("x"),
+				Err: &strconv.NumError{
+					Func: "ParseInt",
+					Num:  "x",
+					Err:  strconv.ErrSyntax,
+				},
+			},
+		},
+		{
+			description: "it should detect an invalid value to fill a int field",
+			data:        []byte(fmt.Sprintf("%1s%399s", "x", "")),
+			v: &struct {
+				FieldA int `cnab:"0,1"`
+			}{},
+			expected: &struct {
+				FieldA int `cnab:"0,1"`
+			}{},
+			expectedError: gocnab.UnmarshalFieldError{
+				Field: "FieldA",
+				Data:  []byte("x"),
+				Err: &strconv.NumError{
+					Func: "ParseInt",
+					Num:  "x",
+					Err:  strconv.ErrSyntax,
+				},
+			},
+		},
+		{
+			description: "it should detect an invalid value to fill a uint field",
+			data:        []byte(fmt.Sprintf("%1s%399s", "x", "")),
+			v: &struct {
+				FieldA uint `cnab:"0,1"`
+			}{},
+			expected: &struct {
+				FieldA uint `cnab:"0,1"`
+			}{},
+			expectedError: gocnab.UnmarshalFieldError{
+				Field: "FieldA",
+				Data:  []byte("x"),
+				Err: &strconv.NumError{
+					Func: "ParseUint",
+					Num:  "x",
+					Err:  strconv.ErrSyntax,
+				},
+			},
+		},
+		{
+			description: "it should detect an invalid value to fill a float field",
+			data:        []byte(fmt.Sprintf("%2s%398s", "xx", "")),
+			v: &struct {
+				FieldA float64 `cnab:"0,2"`
+			}{},
+			expected: &struct {
+				FieldA float64 `cnab:"0,2"`
+			}{},
+			expectedError: gocnab.UnmarshalFieldError{
+				Field: "FieldA",
+				Data:  []byte("xx"),
+				Err: &strconv.NumError{
+					Func: "ParseFloat",
+					Num:  "0.xx",
+					Err:  strconv.ErrSyntax,
+				},
+			},
+		},
+		{
+			description: "it should detect an unknown type when filling a field",
+			data:        []byte(fmt.Sprintf("%1s%399s", "x", "")),
+			v: &struct {
+				FieldA struct{} `cnab:"0,1"`
+			}{},
+			expected: &struct {
+				FieldA struct{} `cnab:"0,1"`
+			}{},
+			expectedError: gocnab.UnmarshalFieldError{
+				Field: "FieldA",
+				Data:  []byte("x"),
+				Err:   gocnab.ErrUnsupportedType,
 			},
 		},
 	}

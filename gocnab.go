@@ -281,7 +281,7 @@ func unmarshalField(data []byte, v reflect.Value, begin, end int) error {
 			return err
 		}
 
-		v.SetBool(boolNumber == 1)
+		v.SetBool(boolNumber != 0)
 		return nil
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
