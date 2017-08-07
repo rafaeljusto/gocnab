@@ -98,7 +98,10 @@ func marshal(data []byte, v reflect.Value) error {
 		structField := structType.Field(i)
 		begin, end, err := parseCNABFieldTag(structField, len(data))
 		if err != nil {
-			return err
+			return FieldError{
+				Field: structField.Name,
+				Err:   err,
+			}
 		}
 
 		// ignore fields without range
@@ -239,7 +242,10 @@ func unmarshal(data []byte, v reflect.Value) error {
 		structField := structType.Field(i)
 		begin, end, err := parseCNABFieldTag(structField, len(data))
 		if err != nil {
-			return err
+			return FieldError{
+				Field: structField.Name,
+				Err:   err,
+			}
 		}
 
 		// ignore fields without range or not exported
@@ -249,8 +255,9 @@ func unmarshal(data []byte, v reflect.Value) error {
 		}
 
 		if err = unmarshalField(data, field, begin, end); err != nil {
-			return FieldError{
+			return UnmarshalFieldError{
 				Field: structField.Name,
+				Data:  data[begin:end],
 				Err:   err,
 			}
 		}
@@ -337,33 +344,21 @@ func parseCNABFieldTag(structField reflect.StructField, dataSize int) (begin int
 
 	cnabFieldOptions := strings.Split(cnabFieldOptionsRaw, ",")
 	if len(cnabFieldOptions) != 2 {
-		return 0, 0, FieldError{
-			Field: structField.Name,
-			Err:   ErrInvalidFieldTagFormat,
-		}
+		return 0, 0, ErrInvalidFieldTagFormat
 	}
 
 	begin, err = strconv.Atoi(cnabFieldOptions[0])
 	if err != nil {
-		return 0, 0, FieldError{
-			Field: structField.Name,
-			Err:   ErrInvalidFieldTagBeginRange,
-		}
+		return 0, 0, ErrInvalidFieldTagBeginRange
 	}
 
 	end, err = strconv.Atoi(cnabFieldOptions[1])
 	if err != nil {
-		return 0, 0, FieldError{
-			Field: structField.Name,
-			Err:   ErrInvalidFieldTagEndRange,
-		}
+		return 0, 0, ErrInvalidFieldTagEndRange
 	}
 
 	if begin < 0 || end < begin || end > dataSize {
-		return 0, 0, FieldError{
-			Field: structField.Name,
-			Err:   ErrInvalidFieldTagRange,
-		}
+		return 0, 0, ErrInvalidFieldTagRange
 	}
 
 	return
@@ -389,7 +384,7 @@ type FieldError struct {
 	Err   error
 }
 
-// Error return a human readable representation of the field in tag error.
+// Error return a human readable representation of the field error.
 func (f FieldError) Error() string {
 	errStr := "<nil>"
 	if f.Err != nil {
@@ -397,4 +392,27 @@ func (f FieldError) Error() string {
 	}
 
 	return fmt.Sprintf("gocnab: error in field %s. details: %s", f.Field, errStr)
+}
+
+// UnmarshalFieldError stores the error that occurred while decoding the CNAB
+// data into a field.
+type UnmarshalFieldError struct {
+	Field string
+	Data  []byte
+	Err   error
+}
+
+// Error return a human readable representation of the unmarshal error.
+func (u UnmarshalFieldError) Error() string {
+	dataStr := "<nil>"
+	if u.Data != nil {
+		dataStr = string(u.Data)
+	}
+
+	errStr := "<nil>"
+	if u.Err != nil {
+		errStr = u.Err.Error()
+	}
+
+	return fmt.Sprintf("gocnab: error unmarshaling in field %s with data “%s”. details: %s", u.Field, dataStr, errStr)
 }

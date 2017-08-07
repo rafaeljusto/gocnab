@@ -10,9 +10,12 @@
 CNAB (Un)Marshaler is an encoder for the brazilian banks' protocol that will
 help you to create and/or parse CNAB (Centro Nacional de Automação Bancária)
 encoded files. You can use the struct tags to define the position of the field
-in the CNAB files `[begin,end)`. It also supports `gocnab.Marshaler`,
-`gocnab.Unmarshaler`, `encoding.TextMarshaler` and `encoding.TextUnmarshaler`
-for custom types.
+in the CNAB files `[begin,end)`. It supports basic types `string`, `bool`
+(represented by `1` or `0`), `int`, `int8`, `int16`, `int32`, `int64`, `uint`,
+`uint8`, `uint16`, `uint23`, `uint64`, `float32` and `float64` (decimal
+separator removed). And for custom types it is possible to implement
+`gocnab.Marshaler`, `gocnab.Unmarshaler`, `encoding.TextMarshaler` and
+`encoding.TextUnmarshaler` to make full use of this library.
 
 ## Install
 

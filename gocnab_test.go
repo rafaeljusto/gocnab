@@ -568,6 +568,130 @@ func TestUnmarshal(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "it should detect when output type is not a pointer",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			v: struct {
+				FieldA int `cnab:"0,20"`
+			}{},
+			expected: struct {
+				FieldA int `cnab:"0,20"`
+			}{},
+			expectedError: gocnab.ErrUnsupportedType,
+		},
+		{
+			description: "it should detect when output type is not a slice of struct",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s\n%020d%30s%10s%010d0        1%30s%30s%100s\n",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "",
+				321, "This is another test", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "This is a custom type test 3", "This is a custom type test 4", "")),
+			v:             &[]int{},
+			expected:      &[]int{},
+			expectedError: gocnab.ErrUnsupportedType,
+		},
+		{
+			description: "it should detect when output type is not supported",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			v:             func() *int { var x int; return &x }(),
+			expected:      func() *int { var x int; return &x }(),
+			expectedError: gocnab.ErrUnsupportedType,
+		},
+		{
+			description: "it should detect an invalid field format",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			v: &struct {
+				FieldA int `cnab:"xxxxxxxx"`
+			}{},
+			expected: &struct {
+				FieldA int `cnab:"xxxxxxxx"`
+			}{},
+			expectedError: gocnab.FieldError{
+				Field: "FieldA",
+				Err:   gocnab.ErrInvalidFieldTagFormat,
+			},
+		},
+		{
+			description: "it should detect an invalid begin range",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s\n%020d%30s%10s%010d0        1%30s%30s%100s\n",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "",
+				321, "This is another test", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "This is a custom type test 3", "This is a custom type test 4", "")),
+			v: &[]struct {
+				FieldA int `cnab:"X,20"`
+			}{
+				{},
+			},
+			expected: &[]struct {
+				FieldA int `cnab:"X,20"`
+			}{
+				{},
+			},
+			expectedError: gocnab.FieldError{
+				Field: "FieldA",
+				Err:   gocnab.ErrInvalidFieldTagBeginRange,
+			},
+		},
+		{
+			description: "it should detect an invalid end range",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			v: &struct {
+				FieldA int `cnab:"0,X"`
+			}{},
+			expected: &struct {
+				FieldA int `cnab:"0,X"`
+			}{},
+			expectedError: gocnab.FieldError{
+				Field: "FieldA",
+				Err:   gocnab.ErrInvalidFieldTagEndRange,
+			},
+		},
+		{
+			description: "it should detect an invalid range (negative begin)",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			v: &struct {
+				FieldA int `cnab:"-1,20"`
+			}{},
+			expected: &struct {
+				FieldA int `cnab:"-1,20"`
+			}{},
+			expectedError: gocnab.FieldError{
+				Field: "FieldA",
+				Err:   gocnab.ErrInvalidFieldTagRange,
+			},
+		},
+		{
+			description: "it should detect an invalid range (end before begin)",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			v: &struct {
+				FieldA int `cnab:"20,0"`
+			}{},
+			expected: &struct {
+				FieldA int `cnab:"20,0"`
+			}{},
+			expectedError: gocnab.FieldError{
+				Field: "FieldA",
+				Err:   gocnab.ErrInvalidFieldTagRange,
+			},
+		},
+		{
+			description: "it should detect an invalid range (end after CNAB limit)",
+			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
+				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			v: &struct {
+				FieldA int `cnab:"0,241"`
+			}{},
+			expected: &struct {
+				FieldA int `cnab:"0,241"`
+			}{},
+			expectedError: gocnab.FieldError{
+				Field: "FieldA",
+				Err:   gocnab.ErrInvalidFieldTagRange,
+			},
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -666,6 +790,43 @@ func TestFieldError_Error(t *testing.T) {
 				Field: "FieldA",
 			},
 			expected: "gocnab: error in field FieldA. details: <nil>",
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.description, func(t *testing.T) {
+			text := scenario.err.Error()
+
+			if scenario.expected != text {
+				t.Errorf("expected text “%s” and got “%s”", scenario.expected, text)
+			}
+		})
+	}
+}
+
+func TestUnmarshalFieldError_Error(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		description string
+		err         gocnab.UnmarshalFieldError
+		expected    string
+	}{
+		{
+			description: "it should build the error message correctly",
+			err: gocnab.UnmarshalFieldError{
+				Field: "FieldA",
+				Data:  []byte("invalid input"),
+				Err:   gocnab.ErrInvalidFieldTagRange,
+			},
+			expected: "gocnab: error unmarshaling in field FieldA with data “invalid input”. details: invalid range in cnab tag",
+		},
+		{
+			description: "it should detect when internal data and error are nil",
+			err: gocnab.UnmarshalFieldError{
+				Field: "FieldA",
+			},
+			expected: "gocnab: error unmarshaling in field FieldA with data “<nil>”. details: <nil>",
 		},
 	}
 
