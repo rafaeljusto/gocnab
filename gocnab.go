@@ -32,8 +32,7 @@ var (
 	ErrInvalidFieldTagRange = errors.New("invalid range in cnab tag")
 )
 
-// Marshal240 returns the CNAB 240 encoding of v. Text is transformed to
-// uppercase and is aligned to the left.
+// Marshal240 returns the CNAB 240 encoding of v.
 func Marshal240(v interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(v)
 
@@ -63,8 +62,7 @@ func Marshal240(v interface{}) ([]byte, error) {
 	return nil, ErrUnsupportedType
 }
 
-// Marshal400 returns the CNAB 400 encoding of v. Text is transformed to
-// uppercase and is aligned to the left.
+// Marshal400 returns the CNAB 400 encoding of v.
 func Marshal400(v interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(v)
 
