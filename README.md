@@ -5,6 +5,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rafaeljusto/gocnab)](https://goreportcard.com/report/github.com/rafaeljusto/gocnab)
 [![codebeat badge](https://codebeat.co/badges/b3a4c784-49db-4e3f-81f7-c35f4e35f70a)](https://codebeat.co/projects/github-com-rafaeljusto-gocnab-master)
 
+![toglacier](https://raw.githubusercontent.com/rafaeljusto/gocnab/master/gocnab.png)
+
 # gocnab
 
 CNAB (Un)Marshaler is an encoder for the brazilian banks' protocol that will
