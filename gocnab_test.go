@@ -933,6 +933,64 @@ func TestUnmarshalFieldError_Error(t *testing.T) {
 	}
 }
 
+func ExampleMarshal240() {
+	e := struct {
+		FieldA int     `cnab:"0,20"`
+		FieldB string  `cnab:"20,50"`
+		FieldC float64 `cnab:"50,60"`
+		FieldD uint    `cnab:"60,70"`
+		FieldE bool    `cnab:"70,71"`
+	}{
+		FieldA: 123,
+		FieldB: "This is a text",
+		FieldC: 50.30,
+		FieldD: 445,
+		FieldE: true,
+	}
+
+	data, _ := gocnab.Marshal240(e)
+
+	fmt.Println(string(data))
+	// Output: 00000000000000000123THIS IS A TEXT                000000503000000004451
+}
+
+func ExampleMarshal400() {
+	e := struct {
+		FieldA int     `cnab:"0,20"`
+		FieldB string  `cnab:"20,50"`
+		FieldC float64 `cnab:"50,60"`
+		FieldD uint    `cnab:"60,70"`
+		FieldE bool    `cnab:"70,71"`
+	}{
+		FieldA: 123,
+		FieldB: "This is a text",
+		FieldC: 50.30,
+		FieldD: 445,
+		FieldE: true,
+	}
+
+	data, _ := gocnab.Marshal400(e)
+
+	fmt.Println(string(data))
+	// Output: 00000000000000000123THIS IS A TEXT                000000503000000004451
+}
+
+func ExampleUnmarshal() {
+	var e struct {
+		FieldA int     `cnab:"0,20"`
+		FieldB string  `cnab:"20,50"`
+		FieldC float64 `cnab:"50,60"`
+		FieldD uint    `cnab:"60,70"`
+		FieldE bool    `cnab:"70,71"`
+	}
+
+	data := []byte("00000000000000000123THIS IS A TEXT                000000503000000004451")
+	gocnab.Unmarshal(data, &e)
+
+	fmt.Printf("%v\n", e)
+	// Output: {123 THIS IS A TEXT 50.3 445 true}
+}
+
 type customType1 func() ([]byte, error)
 
 func (c customType1) MarshalCNAB() ([]byte, error) {

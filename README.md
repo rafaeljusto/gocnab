@@ -9,11 +9,16 @@
 
 # gocnab
 
-CNAB (Un)Marshaler is an encoder for the brazilian banks' protocol that will
-help you to create and/or parse CNAB (Centro Nacional de Automação Bancária)
-encoded files. You can use the struct tags to define the position of the field
-in the CNAB files `[begin,end)`. It supports basic types `string` (uppercase and
-left align), `bool` (represented by `1` or `0`), `int`, `int8`, `int16`,
+gocnab implements encoding and decoding of CNAB (Centro Nacional de Automação
+Bancária) data as defined by [FEBRABAN](https://www.febraban.org.br/).
+
+When marshaling it is possible to inform a struct, that will generate 1 CNAB
+line, or a slice of structs to generate multiple CNAB lines. On unmarshal a
+pointer to a struct or a slice of structs should be used.
+
+The library use struct tags to define the position of the field in the CNAB
+content `[begin,end)`. It supports the basic attribute types `string` (uppercase
+and left align), `bool` (represented by `1` or `0`), `int`, `int8`, `int16`,
 `int32`, `int64`, `uint`, `uint8`, `uint16`, `uint23`, `uint64`, `float32` and
 `float64` (decimal separator removed). And for custom types it is possible to
 implement `gocnab.Marshaler`, `gocnab.Unmarshaler`, `encoding.TextMarshaler` and
