@@ -47,8 +47,8 @@ func TestMarshal240(t *testing.T) {
 					return []byte("This is a custom type test 2"), nil
 				}),
 			},
-			expected: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 		},
 		{
 			description: "it should create a CNAB240 correctly from a slice of structs",
@@ -92,9 +92,9 @@ func TestMarshal240(t *testing.T) {
 					}),
 				},
 			},
-			expected: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s\n%020d%30s%10s%010d0        1%30s%30s%100s\n",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "",
-				321, "This is another test", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "This is a custom type test 3", "This is a custom type test 4", "")),
+			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s\n%020d%-30s%10s%010d0000000001%-30s%-30s%100s\n",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 		},
 		{
 			description: "it should detect an invalid field format",
@@ -271,8 +271,8 @@ func TestMarshal400(t *testing.T) {
 					return []byte("This is a custom type test 2"), nil
 				}),
 			},
-			expected: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%260s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 		},
 		{
 			description: "it should create a CNAB400 correctly from a slice of structs",
@@ -316,9 +316,9 @@ func TestMarshal400(t *testing.T) {
 					}),
 				},
 			},
-			expected: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%260s\n%020d%30s%10s%010d0        1%30s%30s%260s\n",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "",
-				321, "This is another test", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "This is a custom type test 3", "This is a custom type test 4", "")),
+			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 		},
 		{
 			description: "it should detect an invalid field format",
@@ -472,8 +472,8 @@ func TestUnmarshal(t *testing.T) {
 	}{
 		{
 			description: "it should unmarshal to a struct correctly",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 			v: &struct {
 				FieldA int         `cnab:"0,20"`
 				FieldB string      `cnab:"20,50"`
@@ -499,24 +499,24 @@ func TestUnmarshal(t *testing.T) {
 				fieldJ string      `cnab:"140,150"` // should ignore not exported fields
 			}{
 				FieldA: 123,
-				FieldB: "This is a test with a long tex",
+				FieldB: "THIS IS A TEST WITH A LONG TEX",
 				FieldC: 50.30,
 				FieldD: 445,
 				FieldE: true,
 				FieldF: false,
 				FieldG: customType3{
-					data: "This is a custom type test 1",
+					data: "THIS IS A CUSTOM TYPE TEST 1",
 				},
 				FieldH: customType4{
-					data: "This is a custom type test 2",
+					data: "THIS IS A CUSTOM TYPE TEST 2",
 				},
 			},
 		},
 		{
 			description: "it should unmarshal to a slice of structs correctly",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s\n%020d%30s%10s%010d0        1%30s%30s%100s\n",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "",
-				321, "This is another test", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "This is a custom type test 3", "This is a custom type test 4", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 			v: &[]struct {
 				FieldA int         `cnab:"0,20"`
 				FieldB string      `cnab:"20,50"`
@@ -541,38 +541,38 @@ func TestUnmarshal(t *testing.T) {
 			}{
 				{
 					FieldA: 123,
-					FieldB: "This is a test with a long tex",
+					FieldB: "THIS IS A TEST WITH A LONG TEX",
 					FieldC: 50.30,
 					FieldD: 445,
 					FieldE: true,
 					FieldF: false,
 					FieldG: customType3{
-						data: "This is a custom type test 1",
+						data: "THIS IS A CUSTOM TYPE TEST 1",
 					},
 					FieldH: customType4{
-						data: "This is a custom type test 2",
+						data: "THIS IS A CUSTOM TYPE TEST 2",
 					},
 				},
 				{
 					FieldA: 321,
-					FieldB: "This is another test",
+					FieldB: "THIS IS ANOTHER TEST",
 					FieldC: 30.50,
 					FieldD: 644,
 					FieldE: false,
 					FieldF: true,
 					FieldG: customType3{
-						data: "This is a custom type test 3",
+						data: "THIS IS A CUSTOM TYPE TEST 3",
 					},
 					FieldH: customType4{
-						data: "This is a custom type test 4",
+						data: "THIS IS A CUSTOM TYPE TEST 4",
 					},
 				},
 			},
 		},
 		{
 			description: "it should detect when output type is not a pointer",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 			v: struct {
 				FieldA int `cnab:"0,20"`
 			}{},
@@ -583,25 +583,25 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect when output type is not a slice of struct",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s\n%020d%30s%10s%010d0        1%30s%30s%100s\n",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "",
-				321, "This is another test", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "This is a custom type test 3", "This is a custom type test 4", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 			v:             &[]int{},
 			expected:      &[]int{},
 			expectedError: gocnab.ErrUnsupportedType,
 		},
 		{
 			description: "it should detect when output type is not supported",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 			v:             func() *int { var x int; return &x }(),
 			expected:      func() *int { var x int; return &x }(),
 			expectedError: gocnab.ErrUnsupportedType,
 		},
 		{
 			description: "it should detect an invalid field format",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 			v: &struct {
 				FieldA int `cnab:"xxxxxxxx"`
 			}{},
@@ -615,9 +615,9 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect an invalid begin range",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s\n%020d%30s%10s%010d0        1%30s%30s%100s\n",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "",
-				321, "This is another test", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "This is a custom type test 3", "This is a custom type test 4", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 			v: &[]struct {
 				FieldA int `cnab:"X,20"`
 			}{
@@ -635,8 +635,8 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect an invalid end range",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 			v: &struct {
 				FieldA int `cnab:"0,X"`
 			}{},
@@ -650,8 +650,8 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect an invalid range (negative begin)",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 			v: &struct {
 				FieldA int `cnab:"-1,20"`
 			}{},
@@ -665,8 +665,8 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect an invalid range (end before begin)",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 			v: &struct {
 				FieldA int `cnab:"20,0"`
 			}{},
@@ -680,8 +680,8 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect an invalid range (end after CNAB limit)",
-			data: []byte(fmt.Sprintf("%020d%30s%10s%010d1        0%30s%30s%100s",
-				123, "This is a test with a long tex", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "This is a custom type test 1", "This is a custom type test 2", "")),
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
 			v: &struct {
 				FieldA int `cnab:"0,241"`
 			}{},
@@ -695,7 +695,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect an invalid value to fill a boolean field",
-			data:        []byte(fmt.Sprintf("%1s%399s", "x", "")),
+			data:        []byte(fmt.Sprintf("%1s%399s", "X", "")),
 			v: &struct {
 				FieldA bool `cnab:"0,1"`
 			}{},
@@ -704,17 +704,17 @@ func TestUnmarshal(t *testing.T) {
 			}{},
 			expectedError: gocnab.UnmarshalFieldError{
 				Field: "FieldA",
-				Data:  []byte("x"),
+				Data:  []byte("X"),
 				Err: &strconv.NumError{
 					Func: "ParseInt",
-					Num:  "x",
+					Num:  "X",
 					Err:  strconv.ErrSyntax,
 				},
 			},
 		},
 		{
 			description: "it should detect an invalid value to fill a int field",
-			data:        []byte(fmt.Sprintf("%1s%399s", "x", "")),
+			data:        []byte(fmt.Sprintf("%1s%399s", "X", "")),
 			v: &struct {
 				FieldA int `cnab:"0,1"`
 			}{},
@@ -723,17 +723,17 @@ func TestUnmarshal(t *testing.T) {
 			}{},
 			expectedError: gocnab.UnmarshalFieldError{
 				Field: "FieldA",
-				Data:  []byte("x"),
+				Data:  []byte("X"),
 				Err: &strconv.NumError{
 					Func: "ParseInt",
-					Num:  "x",
+					Num:  "X",
 					Err:  strconv.ErrSyntax,
 				},
 			},
 		},
 		{
 			description: "it should detect an invalid value to fill a uint field",
-			data:        []byte(fmt.Sprintf("%1s%399s", "x", "")),
+			data:        []byte(fmt.Sprintf("%1s%399s", "X", "")),
 			v: &struct {
 				FieldA uint `cnab:"0,1"`
 			}{},
@@ -742,17 +742,17 @@ func TestUnmarshal(t *testing.T) {
 			}{},
 			expectedError: gocnab.UnmarshalFieldError{
 				Field: "FieldA",
-				Data:  []byte("x"),
+				Data:  []byte("X"),
 				Err: &strconv.NumError{
 					Func: "ParseUint",
-					Num:  "x",
+					Num:  "X",
 					Err:  strconv.ErrSyntax,
 				},
 			},
 		},
 		{
 			description: "it should detect an invalid value to fill a float field",
-			data:        []byte(fmt.Sprintf("%2s%398s", "xx", "")),
+			data:        []byte(fmt.Sprintf("%2s%398s", "XX", "")),
 			v: &struct {
 				FieldA float64 `cnab:"0,2"`
 			}{},
@@ -761,17 +761,17 @@ func TestUnmarshal(t *testing.T) {
 			}{},
 			expectedError: gocnab.UnmarshalFieldError{
 				Field: "FieldA",
-				Data:  []byte("xx"),
+				Data:  []byte("XX"),
 				Err: &strconv.NumError{
 					Func: "ParseFloat",
-					Num:  "0.xx",
+					Num:  "0.XX",
 					Err:  strconv.ErrSyntax,
 				},
 			},
 		},
 		{
 			description: "it should detect an unknown type when filling a field",
-			data:        []byte(fmt.Sprintf("%1s%399s", "x", "")),
+			data:        []byte(fmt.Sprintf("%1s%399s", "X", "")),
 			v: &struct {
 				FieldA struct{} `cnab:"0,1"`
 			}{},
@@ -780,7 +780,7 @@ func TestUnmarshal(t *testing.T) {
 			}{},
 			expectedError: gocnab.UnmarshalFieldError{
 				Field: "FieldA",
-				Data:  []byte("x"),
+				Data:  []byte("X"),
 				Err:   gocnab.ErrUnsupportedType,
 			},
 		},
@@ -817,30 +817,30 @@ func TestMarshalUnmarshal(t *testing.T) {
 	input := []testType{
 		{
 			FieldA: 123,
-			FieldB: "This is a test",
+			FieldB: "THIS IS A TEST",
 			FieldC: 50.30,
 			FieldD: 445,
 			FieldE: true,
 			FieldF: false,
 			FieldG: customType3{
-				data: "This is a custom type test 1",
+				data: "THIS IS A CUSTOM TYPE TEST 1",
 			},
 			FieldH: customType4{
-				data: "This is a custom type test 2",
+				data: "THIS IS A CUSTOM TYPE TEST 2",
 			},
 		},
 		{
 			FieldA: 321,
-			FieldB: "This is another test",
+			FieldB: "THIS IS ANOTHER TEST",
 			FieldC: 30.50,
 			FieldD: 644,
 			FieldE: false,
 			FieldF: true,
 			FieldG: customType3{
-				data: "This is a custom type test 3",
+				data: "THIS IS A CUSTOM TYPE TEST 3",
 			},
 			FieldH: customType4{
-				data: "This is a custom type test 4",
+				data: "THIS IS A CUSTOM TYPE TEST 4",
 			},
 		},
 	}

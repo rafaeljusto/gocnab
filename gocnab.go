@@ -32,7 +32,8 @@ var (
 	ErrInvalidFieldTagRange = errors.New("invalid range in cnab tag")
 )
 
-// Marshal240 returns the CNAB 240 encoding of v.
+// Marshal240 returns the CNAB 240 encoding of v. Text is transformed to
+// uppercase and is aligned to the left.
 func Marshal240(v interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(v)
 
@@ -62,7 +63,8 @@ func Marshal240(v interface{}) ([]byte, error) {
 	return nil, ErrUnsupportedType
 }
 
-// Marshal400 returns the CNAB 400 encoding of v.
+// Marshal400 returns the CNAB 400 encoding of v. Text is transformed to
+// uppercase and is aligned to the left.
 func Marshal400(v interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(v)
 
@@ -137,6 +139,7 @@ func marshalField(data []byte, v reflect.Value, begin, end int) error {
 		} else {
 			convertedFieldContent = "0"
 		}
+		convertedFieldContent = fmt.Sprintf("%0"+strconv.Itoa(cnabFieldSize)+"s", convertedFieldContent)
 		setFieldContent(data, convertedFieldContent, begin, end)
 		return nil
 
@@ -190,10 +193,10 @@ func setFieldContent(data []byte, fieldContent string, begin, end int) {
 	if len(fieldContent) > cnabFieldSize {
 		fieldContent = fieldContent[0:cnabFieldSize]
 	} else if len(fieldContent) < cnabFieldSize {
-		fieldContent = strings.Repeat(" ", cnabFieldSize-len(fieldContent)) + fieldContent
+		fieldContent = fieldContent + strings.Repeat(" ", cnabFieldSize-len(fieldContent))
 	}
 
-	copy(data[begin:], fieldContent)
+	copy(data[begin:], strings.ToUpper(fieldContent))
 }
 
 // Unmarshal parses the CNAB-encoded data and stores the result in the value
