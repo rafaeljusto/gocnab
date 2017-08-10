@@ -35,12 +35,7 @@ go get -u github.com/rafaeljusto/gocnab
 ```go
 package main
 
-import (
-	"fmt"
-	"reflect"
-
-	"github.com/rafaeljusto/gocnab"
-)
+import "github.com/rafaeljusto/gocnab"
 
 type example struct {
 	FieldA int     `cnab:"0,20"`
@@ -53,7 +48,7 @@ type example struct {
 func main() {
 	e1 := example{
 		FieldA: 123,
-		FieldB: "This is a text",
+		FieldB: "THIS IS A TEST",
 		FieldC: 50.30,
 		FieldD: 445,
 		FieldE: true,
@@ -61,16 +56,16 @@ func main() {
 
 	data, err := gocnab.Marshal400(e1)
 	if err != nil {
-		fmt.Println(err)
+		println(err)
 		return
 	}
 
 	var e2 example
 	if err = gocnab.Unmarshal(data, &e2); err != nil {
-		fmt.Println(err)
+		println(err)
 		return
 	}
 
-	fmt.Println(reflect.DeepEqual(e1, e2))
+	println(e1 == e2)
 }
 ```
