@@ -92,7 +92,7 @@ func TestMarshal240(t *testing.T) {
 					}),
 				},
 			},
-			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s\n%020d%-30s%10s%010d0000000001%-30s%-30s%100s\n",
+			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s\n\r%020d%-30s%10s%010d0000000001%-30s%-30s%100s",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 		},
@@ -316,7 +316,7 @@ func TestMarshal400(t *testing.T) {
 					}),
 				},
 			},
-			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n",
+			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n\r%020d%-30s%10s%010d0000000001%-30s%-30s%260s",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 		},
@@ -514,7 +514,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should unmarshal to a slice of structs correctly",
-			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n",
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n\r%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n\r",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 			v: &[]struct {
@@ -583,7 +583,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect when output type is not a slice of struct",
-			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n",
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n\r%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n\r",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 			v:             &[]int{},
@@ -615,7 +615,7 @@ func TestUnmarshal(t *testing.T) {
 		},
 		{
 			description: "it should detect an invalid begin range",
-			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n",
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%260s\n\r%020d%-30s%10s%010d0000000001%-30s%-30s%260s\n\r",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 			v: &[]struct {
@@ -987,7 +987,7 @@ func ExampleUnmarshal() {
 	data := []byte("00000000000000000123THIS IS A TEXT                000000503000000004451")
 	gocnab.Unmarshal(data, &e)
 
-	fmt.Printf("%v\n", e)
+	fmt.Printf("%v\n\r", e)
 	// Output: {123 THIS IS A TEXT 50.3 445 true}
 }
 

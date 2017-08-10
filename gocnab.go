@@ -12,6 +12,12 @@ import (
 	"strings"
 )
 
+// LineBreak defines the control characters at the end of each registry entry.
+// It should be the hex encoded 0D0A except for the last one that should be the
+// hex encoded 1A, but as we don't known if it is really the last line we will
+// let the library user to add it manually.
+const LineBreak = "\n\r"
+
 var (
 	// ErrUnsupportedType raised when trying to marshal something different from a
 	// struct or a slice.
@@ -53,7 +59,11 @@ func Marshal240(v interface{}) ([]byte, error) {
 			}
 
 			cnab240 = append(cnab240, cnab240Line...)
-			cnab240 = append(cnab240, byte('\n'))
+
+			// don't add line break symbol to the last line
+			if i < rv.Len()-1 {
+				cnab240 = append(cnab240, []byte(LineBreak)...)
+			}
 		}
 
 		return cnab240, nil
@@ -83,7 +93,11 @@ func Marshal400(v interface{}) ([]byte, error) {
 			}
 
 			cnab400 = append(cnab400, cnab400Line...)
-			cnab400 = append(cnab400, byte('\n'))
+
+			// don't add line break symbol to the last line
+			if i < rv.Len()-1 {
+				cnab400 = append(cnab400, []byte(LineBreak)...)
+			}
 		}
 
 		return cnab400, nil
@@ -217,7 +231,7 @@ func Unmarshal(data []byte, v interface{}) error {
 			return ErrUnsupportedType
 		}
 
-		cnabLines := bytes.Split(data, []byte("\n"))
+		cnabLines := bytes.Split(data, []byte(LineBreak))
 		for _, cnabLine := range cnabLines {
 			if len(cnabLine) == 0 {
 				continue
