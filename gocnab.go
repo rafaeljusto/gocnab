@@ -13,10 +13,12 @@ import (
 )
 
 // LineBreak defines the control characters at the end of each registry entry.
-// It should be the hex encoded 0D0A except for the last one that should be the
-// hex encoded 1A, but as we don't known if it is really the last line we will
-// let the library user to add it manually.
+// It should be the hex encoded 0D0A except for the last one.
 const LineBreak = "\r\n"
+
+// FinalControlCharacter defines the control character of the last registry
+// entry. It should be the hex encoded 1A.
+const FinalControlCharacter = "\x1A"
 
 var (
 	// ErrUnsupportedType raised when trying to marshal something different from a
@@ -38,75 +40,78 @@ var (
 	ErrInvalidFieldTagRange = errors.New("invalid range in cnab tag")
 )
 
-// Marshal240 returns the CNAB 240 encoding of v.
-func Marshal240(v interface{}) ([]byte, error) {
+// Marshal240 returns the CNAB 240 encoding of vs.
+func Marshal240(vs ...interface{}) ([]byte, error) {
+	return marshal(240, vs...)
+}
+
+// Marshal400 returns the CNAB 400 encoding of vs.
+func Marshal400(vs ...interface{}) ([]byte, error) {
+	return marshal(400, vs...)
+}
+
+func marshal(lineSize int, vs ...interface{}) ([]byte, error) {
+	var cnab []byte
+
+	for i, v := range vs {
+		rv := reflect.ValueOf(v)
+
+		cnabLine, err := marshalLine(lineSize, v)
+		if err != nil {
+			return nil, err
+		}
+
+		cnab = append(cnab, cnabLine...)
+
+		// don't add line break symbol to the last line
+		if len(vs) > 1 && i < rv.Len()-1 {
+			cnab = append(cnab, []byte(LineBreak)...)
+		}
+	}
+
+	if len(vs) > 1 && cnab != nil {
+		cnab = append(cnab, []byte(FinalControlCharacter)...)
+	}
+
+	return cnab, nil
+}
+
+func marshalLine(lineSize int, v interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(v)
 
 	switch rv.Kind() {
 	case reflect.Struct:
-		cnab240 := []byte(strings.Repeat(" ", 240))
-		err := marshal(cnab240, rv)
-		return cnab240, err
+		cnab := []byte(strings.Repeat(" ", lineSize))
+		if err := marshalStruct(cnab, rv); err != nil {
+			return nil, err
+		}
+
+		return cnab, nil
 
 	case reflect.Slice:
-		var cnab240 []byte
+		var cnab []byte
 
 		for i := 0; i < rv.Len(); i++ {
-			cnab240Line := []byte(strings.Repeat(" ", 240))
-			err := marshal(cnab240Line, rv.Index(i))
-			if err != nil {
+			line := []byte(strings.Repeat(" ", lineSize))
+			if err := marshalStruct(line, rv.Index(i)); err != nil {
 				return nil, err
 			}
 
-			cnab240 = append(cnab240, cnab240Line...)
+			cnab = append(cnab, line...)
 
 			// don't add line break symbol to the last line
 			if i < rv.Len()-1 {
-				cnab240 = append(cnab240, []byte(LineBreak)...)
+				cnab = append(cnab, []byte(LineBreak)...)
 			}
 		}
 
-		return cnab240, nil
+		return cnab, nil
 	}
 
 	return nil, ErrUnsupportedType
 }
 
-// Marshal400 returns the CNAB 400 encoding of v.
-func Marshal400(v interface{}) ([]byte, error) {
-	rv := reflect.ValueOf(v)
-
-	switch rv.Kind() {
-	case reflect.Struct:
-		cnab400 := []byte(strings.Repeat(" ", 400))
-		err := marshal(cnab400, rv)
-		return cnab400, err
-
-	case reflect.Slice:
-		var cnab400 []byte
-
-		for i := 0; i < rv.Len(); i++ {
-			cnab400Line := []byte(strings.Repeat(" ", 400))
-			err := marshal(cnab400Line, rv.Index(i))
-			if err != nil {
-				return nil, err
-			}
-
-			cnab400 = append(cnab400, cnab400Line...)
-
-			// don't add line break symbol to the last line
-			if i < rv.Len()-1 {
-				cnab400 = append(cnab400, []byte(LineBreak)...)
-			}
-		}
-
-		return cnab400, nil
-	}
-
-	return nil, ErrUnsupportedType
-}
-
-func marshal(data []byte, v reflect.Value) error {
+func marshalStruct(data []byte, v reflect.Value) error {
 	structType := v.Type()
 	for i := 0; i < structType.NumField(); i++ {
 		structField := structType.Field(i)
