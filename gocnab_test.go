@@ -101,7 +101,6 @@ func TestMarshal240(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"xxxxxxxx"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 240)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagFormat,
@@ -124,7 +123,6 @@ func TestMarshal240(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"0,X"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 240)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagEndRange,
@@ -135,7 +133,6 @@ func TestMarshal240(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"-1,20"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 240)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagRange,
@@ -146,7 +143,6 @@ func TestMarshal240(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"20,0"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 240)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagRange,
@@ -157,7 +153,6 @@ func TestMarshal240(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"0,241"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 240)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagRange,
@@ -172,7 +167,6 @@ func TestMarshal240(t *testing.T) {
 					return nil, errors.New("generic problem")
 				}),
 			},
-			expected: []byte(strings.Repeat(" ", 240)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldG",
 				Err:   errors.New("generic problem"),
@@ -187,7 +181,6 @@ func TestMarshal240(t *testing.T) {
 					return nil, errors.New("generic problem")
 				}),
 			},
-			expected: []byte(strings.Repeat(" ", 240)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldH",
 				Err:   errors.New("generic problem"),
@@ -198,7 +191,6 @@ func TestMarshal240(t *testing.T) {
 			v: struct {
 				FieldJ struct{} `cnab:"140,150"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 240)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldJ",
 				Err:   gocnab.ErrUnsupportedType,
@@ -325,7 +317,6 @@ func TestMarshal400(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"xxxxxxxx"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 400)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagFormat,
@@ -348,7 +339,6 @@ func TestMarshal400(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"0,X"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 400)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagEndRange,
@@ -359,7 +349,6 @@ func TestMarshal400(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"-1,20"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 400)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagRange,
@@ -370,7 +359,6 @@ func TestMarshal400(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"20,0"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 400)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagRange,
@@ -381,7 +369,6 @@ func TestMarshal400(t *testing.T) {
 			v: struct {
 				FieldA int `cnab:"0,401"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 400)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldA",
 				Err:   gocnab.ErrInvalidFieldTagRange,
@@ -396,7 +383,6 @@ func TestMarshal400(t *testing.T) {
 					return nil, errors.New("generic problem")
 				}),
 			},
-			expected: []byte(strings.Repeat(" ", 400)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldG",
 				Err:   errors.New("generic problem"),
@@ -411,7 +397,6 @@ func TestMarshal400(t *testing.T) {
 					return nil, errors.New("generic problem")
 				}),
 			},
-			expected: []byte(strings.Repeat(" ", 400)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldH",
 				Err:   errors.New("generic problem"),
@@ -422,7 +407,6 @@ func TestMarshal400(t *testing.T) {
 			v: struct {
 				FieldJ struct{} `cnab:"140,150"`
 			}{},
-			expected: []byte(strings.Repeat(" ", 400)),
 			expectedError: gocnab.FieldError{
 				Field: "FieldJ",
 				Err:   gocnab.ErrUnsupportedType,
