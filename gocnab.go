@@ -16,7 +16,7 @@ import (
 // It should be the hex encoded 0D0A except for the last one that should be the
 // hex encoded 1A, but as we don't known if it is really the last line we will
 // let the library user to add it manually.
-const LineBreak = "\n\r"
+const LineBreak = "\r\n"
 
 var (
 	// ErrUnsupportedType raised when trying to marshal something different from a
