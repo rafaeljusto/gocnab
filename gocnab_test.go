@@ -968,13 +968,13 @@ func ExampleMarshal240_fullFile() {
 		},
 	}
 
-	trailler := struct {
-		TraillerA string `cnab:"5,30"`
+	footer := struct {
+		FooterA string `cnab:"5,30"`
 	}{
-		TraillerA: "Final text",
+		FooterA: "Final text",
 	}
 
-	data, _ := gocnab.Marshal240(header, content, trailler)
+	data, _ := gocnab.Marshal240(header, content, footer)
 
 	fmt.Println(string(data))
 }
@@ -1000,6 +1000,47 @@ func ExampleMarshal400() {
 	// Output: 00000000000000000123THIS IS A TEXT                000000503000000004451
 }
 
+func ExampleMarshal400_fullFile() {
+	header := struct {
+		HeaderA int `cnab:"0,5"`
+	}{
+		HeaderA: 2,
+	}
+
+	content := []struct {
+		FieldA int     `cnab:"0,20"`
+		FieldB string  `cnab:"20,50"`
+		FieldC float64 `cnab:"50,60"`
+		FieldD uint    `cnab:"60,70"`
+		FieldE bool    `cnab:"70,71"`
+	}{
+		{
+			FieldA: 123,
+			FieldB: "This is a text",
+			FieldC: 50.30,
+			FieldD: 445,
+			FieldE: true,
+		},
+		{
+			FieldA: 321,
+			FieldB: "This is another text",
+			FieldC: 30.50,
+			FieldD: 544,
+			FieldE: false,
+		},
+	}
+
+	footer := struct {
+		FooterA string `cnab:"5,30"`
+	}{
+		FooterA: "Final text",
+	}
+
+	data, _ := gocnab.Marshal400(header, content, footer)
+
+	fmt.Println(string(data))
+}
+
 func ExampleUnmarshal() {
 	var e struct {
 		FieldA int     `cnab:"0,20"`
@@ -1012,8 +1053,39 @@ func ExampleUnmarshal() {
 	data := []byte("00000000000000000123THIS IS A TEXT                000000503000000004451")
 	gocnab.Unmarshal(data, &e)
 
-	fmt.Printf("%v\r\n", e)
+	fmt.Printf("%v\n", e)
 	// Output: {123 THIS IS A TEXT 50.3 445 true}
+}
+
+func ExampleUnmarshal_fullFile() {
+	header := struct {
+		HeaderA int `cnab:"0,5"`
+	}{}
+
+	content := []struct {
+		FieldA int     `cnab:"0,20"`
+		FieldB string  `cnab:"20,50"`
+		FieldC float64 `cnab:"50,60"`
+		FieldD uint    `cnab:"60,70"`
+		FieldE bool    `cnab:"70,71"`
+	}{}
+
+	footer := struct {
+		FooterA string `cnab:"5,30"`
+	}{}
+
+	data := []byte("00000000000000000123THIS IS A TEXT                000000503000000004451" + gocnab.LineBreak +
+		"10000000000000000123THIS IS A TEXT                000000503000000004451" + gocnab.LineBreak +
+		"10000000000000000123THIS IS A TEXT                000000503000000004451" + gocnab.LineBreak +
+		"20000000000000000123THIS IS A TEXT                000000503000000004451" + gocnab.FinalControlCharacter)
+
+	gocnab.Unmarshal(data, map[string]interface{}{
+		"0": &header,
+		"1": &content,
+		"2": &footer,
+	})
+
+	fmt.Printf("%v\n%v\n%v\n", header, content, footer)
 }
 
 type customType1 func() ([]byte, error)

@@ -251,6 +251,35 @@ func Unmarshal(data []byte, v interface{}) error {
 		return nil
 	}
 
+	if mapper, ok := v.(map[string]interface{}); ok {
+		cnabLinesGroupBy := make(map[string][]byte)
+		cnabLines := bytes.Split(data, []byte(LineBreak))
+
+		for _, cnabLine := range cnabLines {
+			if len(cnabLine) == 0 {
+				continue
+			}
+
+			for id := range mapper {
+				if !bytes.HasPrefix(data, []byte(id)) {
+					continue
+				}
+
+				if _, ok := cnabLinesGroupBy[id]; ok {
+					cnabLinesGroupBy[id] = append(cnabLinesGroupBy[id], []byte(LineBreak)...)
+				}
+
+				cnabLinesGroupBy[id] = append(cnabLinesGroupBy[id], cnabLine...)
+			}
+		}
+
+		for id, lines := range cnabLinesGroupBy {
+			if err := Unmarshal(lines, mapper[id]); err != nil {
+				return err
+			}
+		}
+	}
+
 	return ErrUnsupportedType
 }
 
