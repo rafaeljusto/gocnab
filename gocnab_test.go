@@ -938,6 +938,47 @@ func ExampleMarshal240() {
 	// Output: 00000000000000000123THIS IS A TEXT                000000503000000004451
 }
 
+func ExampleMarshal240_fullFile() {
+	header := struct {
+		HeaderA int `cnab:"0,5"`
+	}{
+		HeaderA: 2,
+	}
+
+	content := []struct {
+		FieldA int     `cnab:"0,20"`
+		FieldB string  `cnab:"20,50"`
+		FieldC float64 `cnab:"50,60"`
+		FieldD uint    `cnab:"60,70"`
+		FieldE bool    `cnab:"70,71"`
+	}{
+		{
+			FieldA: 123,
+			FieldB: "This is a text",
+			FieldC: 50.30,
+			FieldD: 445,
+			FieldE: true,
+		},
+		{
+			FieldA: 321,
+			FieldB: "This is another text",
+			FieldC: 30.50,
+			FieldD: 544,
+			FieldE: false,
+		},
+	}
+
+	trailler := struct {
+		TraillerA string `cnab:"5,30"`
+	}{
+		TraillerA: "Final text",
+	}
+
+	data, _ := gocnab.Marshal240(header, content, trailler)
+
+	fmt.Println(string(data))
+}
+
 func ExampleMarshal400() {
 	e := struct {
 		FieldA int     `cnab:"0,20"`
