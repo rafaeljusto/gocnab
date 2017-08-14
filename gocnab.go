@@ -54,8 +54,6 @@ func marshal(lineSize int, vs ...interface{}) ([]byte, error) {
 	var cnab []byte
 
 	for i, v := range vs {
-		rv := reflect.ValueOf(v)
-
 		cnabLine, err := marshalLine(lineSize, v)
 		if err != nil {
 			return nil, err
@@ -64,7 +62,7 @@ func marshal(lineSize int, vs ...interface{}) ([]byte, error) {
 		cnab = append(cnab, cnabLine...)
 
 		// don't add line break symbol to the last line
-		if len(vs) > 1 && i < rv.Len()-1 {
+		if len(vs) > 1 && i < len(vs)-1 {
 			cnab = append(cnab, []byte(LineBreak)...)
 		}
 	}
