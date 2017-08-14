@@ -226,64 +226,74 @@ func Unmarshal(data []byte, v interface{}) error {
 
 	switch rvElem.Kind() {
 	case reflect.Struct:
-		return unmarshal(data, rvElem)
+		return unmarshalStruct(data, rvElem)
 
 	case reflect.Slice:
-		sliceType := rvElem.Type().Elem()
-		if sliceType.Kind() != reflect.Struct {
-			return ErrUnsupportedType
-		}
-
-		cnabLines := bytes.Split(data, []byte(LineBreak))
-		for _, cnabLine := range cnabLines {
-			if len(cnabLine) == 0 {
-				continue
-			}
-
-			itemValue := reflect.New(sliceType)
-			if err := unmarshal(cnabLine, itemValue.Elem()); err != nil {
-				return err
-			}
-
-			rvElem.Set(reflect.Append(rvElem, itemValue.Elem()))
-		}
-
-		return nil
+		return unmarshalSlice(data, rvElem)
 	}
 
 	if mapper, ok := v.(map[string]interface{}); ok {
-		cnabLinesGroupBy := make(map[string][]byte)
-		cnabLines := bytes.Split(data, []byte(LineBreak))
-
-		for _, cnabLine := range cnabLines {
-			if len(cnabLine) == 0 {
-				continue
-			}
-
-			for id := range mapper {
-				if !bytes.HasPrefix(data, []byte(id)) {
-					continue
-				}
-
-				if _, ok := cnabLinesGroupBy[id]; ok {
-					cnabLinesGroupBy[id] = append(cnabLinesGroupBy[id], []byte(LineBreak)...)
-				}
-
-				cnabLinesGroupBy[id] = append(cnabLinesGroupBy[id], cnabLine...)
-			}
-		}
-
-		for id, lines := range cnabLinesGroupBy {
-			if err := Unmarshal(lines, mapper[id]); err != nil {
-				return err
-			}
-		}
+		return unmarshalMapper(data, mapper)
 	}
 
 	return ErrUnsupportedType
 }
 
-func unmarshal(data []byte, v reflect.Value) error {
+func unmarshalMapper(data []byte, mapper map[string]interface{}) error {
+	cnabLinesGroupBy := make(map[string][]byte)
+	cnabLines := bytes.Split(data, []byte(LineBreak))
+
+	for _, cnabLine := range cnabLines {
+		if len(cnabLine) == 0 {
+			continue
+		}
+
+		for id := range mapper {
+			if !bytes.HasPrefix(data, []byte(id)) {
+				continue
+			}
+
+			if _, ok := cnabLinesGroupBy[id]; ok {
+				cnabLinesGroupBy[id] = append(cnabLinesGroupBy[id], []byte(LineBreak)...)
+			}
+
+			cnabLinesGroupBy[id] = append(cnabLinesGroupBy[id], cnabLine...)
+		}
+	}
+
+	for id, lines := range cnabLinesGroupBy {
+		if err := Unmarshal(lines, mapper[id]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func unmarshalSlice(data []byte, v reflect.Value) error {
+	sliceType := v.Type().Elem()
+	if sliceType.Kind() != reflect.Struct {
+		return ErrUnsupportedType
+	}
+
+	cnabLines := bytes.Split(data, []byte(LineBreak))
+	for _, cnabLine := range cnabLines {
+		if len(cnabLine) == 0 {
+			continue
+		}
+
+		itemValue := reflect.New(sliceType)
+		if err := unmarshalStruct(cnabLine, itemValue.Elem()); err != nil {
+			return err
+		}
+
+		v.Set(reflect.Append(v, itemValue.Elem()))
+	}
+
+	return nil
+}
+
+func unmarshalStruct(data []byte, v reflect.Value) error {
 	structType := v.Type()
 	for i := 0; i < structType.NumField(); i++ {
 		structField := structType.Field(i)
