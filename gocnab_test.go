@@ -744,6 +744,82 @@ func TestUnmarshal(t *testing.T) {
 			},
 		},
 		{
+			description: "it should unmarshal to a mapper correctly",
+			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d0000000000%-30s%-30s%100s\r\n%020d%-30s%10s%010d1000000000%-30s%-30s%100s\r\n%020d%-30s%10s%010d0000000001%-30s%-30s%100s\x1a",
+				111, "THIS IS SOMETHING", strings.Replace(fmt.Sprintf("0%010.2f", 77.70), ".", "", -1), 45, "HELLO 1", "HELLO 2", "",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
+			v: map[string]interface{}{
+				"0": &[]struct {
+					FieldA int         `cnab:"0,20"`
+					FieldB string      `cnab:"20,50"`
+					FieldC float64     `cnab:"50,60"`
+					FieldD uint        `cnab:"60,70"`
+					FieldE bool        `cnab:"70,71"`
+					FieldF bool        `cnab:"71,80"`
+					FieldG customType3 `cnab:"80,110"`
+					FieldH customType4 `cnab:"110,140"`
+					FieldI time.Time   // should ignore fields without CNAB tag
+				}{},
+			},
+			expected: map[string]interface{}{
+				"0": &[]struct {
+					FieldA int         `cnab:"0,20"`
+					FieldB string      `cnab:"20,50"`
+					FieldC float64     `cnab:"50,60"`
+					FieldD uint        `cnab:"60,70"`
+					FieldE bool        `cnab:"70,71"`
+					FieldF bool        `cnab:"71,80"`
+					FieldG customType3 `cnab:"80,110"`
+					FieldH customType4 `cnab:"110,140"`
+					FieldI time.Time   // should ignore fields without CNAB tag
+				}{
+					{
+						FieldA: 111,
+						FieldB: "THIS IS SOMETHING",
+						FieldC: 77.70,
+						FieldD: 45,
+						FieldE: false,
+						FieldF: false,
+						FieldG: customType3{
+							data: "HELLO 1",
+						},
+						FieldH: customType4{
+							data: "HELLO 2",
+						},
+					},
+					{
+						FieldA: 123,
+						FieldB: "THIS IS A TEST WITH A LONG TEX",
+						FieldC: 50.30,
+						FieldD: 445,
+						FieldE: true,
+						FieldF: false,
+						FieldG: customType3{
+							data: "THIS IS A CUSTOM TYPE TEST 1",
+						},
+						FieldH: customType4{
+							data: "THIS IS A CUSTOM TYPE TEST 2",
+						},
+					},
+					{
+						FieldA: 321,
+						FieldB: "THIS IS ANOTHER TEST",
+						FieldC: 30.50,
+						FieldD: 644,
+						FieldE: false,
+						FieldF: true,
+						FieldG: customType3{
+							data: "THIS IS A CUSTOM TYPE TEST 3",
+						},
+						FieldH: customType4{
+							data: "THIS IS A CUSTOM TYPE TEST 4",
+						},
+					},
+				},
+			},
+		},
+		{
 			description: "it should detect when output type is not a pointer",
 			data: []byte(fmt.Sprintf("%020d%-30s%10s%010d1000000000%-30s%-30s%100s",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "")),
@@ -976,6 +1052,8 @@ func TestUnmarshal(t *testing.T) {
 }
 
 func TestMarshalUnmarshal(t *testing.T) {
+	t.Parallel()
+
 	type testType struct {
 		FieldA int         `cnab:"0,20"`
 		FieldB string      `cnab:"20,50"`
@@ -1249,11 +1327,11 @@ func ExampleUnmarshal() {
 
 func ExampleUnmarshal_fullFile() {
 	header := struct {
-		HeaderA int `cnab:"0,5"`
+		HeaderA int `cnab:"1,5"`
 	}{}
 
 	content := []struct {
-		FieldA int     `cnab:"0,20"`
+		FieldA int     `cnab:"1,20"`
 		FieldB string  `cnab:"20,50"`
 		FieldC float64 `cnab:"50,60"`
 		FieldD uint    `cnab:"60,70"`
@@ -1264,7 +1342,7 @@ func ExampleUnmarshal_fullFile() {
 		FooterA string `cnab:"5,30"`
 	}{}
 
-	data := []byte("00000000000000000123THIS IS A TEXT                000000503000000004451" + gocnab.LineBreak +
+	data := []byte("00005" + gocnab.LineBreak +
 		"10000000000000000123THIS IS A TEXT                000000503000000004451" + gocnab.LineBreak +
 		"10000000000000000123THIS IS A TEXT                000000503000000004451" + gocnab.LineBreak +
 		"20000000000000000123THIS IS A TEXT                000000503000000004451" + gocnab.FinalControlCharacter)

@@ -218,18 +218,20 @@ func setFieldContent(data []byte, fieldContent string, begin, end int) {
 // pointed to by v.
 func Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+	if (rv.Kind() != reflect.Ptr && rv.Kind() != reflect.Map) || rv.IsNil() {
 		return ErrUnsupportedType
 	}
 
-	rvElem := rv.Elem()
+	if rv.Kind() == reflect.Ptr {
+		rvElem := rv.Elem()
 
-	switch rvElem.Kind() {
-	case reflect.Struct:
-		return unmarshalStruct(data, rvElem)
+		switch rvElem.Kind() {
+		case reflect.Struct:
+			return unmarshalStruct(data, rvElem)
 
-	case reflect.Slice:
-		return unmarshalSlice(data, rvElem)
+		case reflect.Slice:
+			return unmarshalSlice(data, rvElem)
+		}
 	}
 
 	if mapper, ok := v.(map[string]interface{}); ok {
@@ -249,7 +251,7 @@ func unmarshalMapper(data []byte, mapper map[string]interface{}) error {
 		}
 
 		for id := range mapper {
-			if !bytes.HasPrefix(data, []byte(id)) {
+			if !bytes.HasPrefix(cnabLine, []byte(id)) {
 				continue
 			}
 
