@@ -40,12 +40,40 @@ var (
 	ErrInvalidFieldTagRange = errors.New("invalid range in cnab tag")
 )
 
-// Marshal240 returns the CNAB 240 encoding of vs.
+// Marshal240 returns the CNAB 240 encoding of vs. The accepted types are struct
+// and slice of struct, where only the exported struct fields with the tag
+// "cnab" are going to be used. Invalid cnab tag ranges will generate errors.
+//
+// The following struct field types are supported: string, bool, int, int8,
+// int16, int32, int64, uint, uint8, uint16, uint23, uint64, float32, float64,
+// gocnab.Marshaler and encoding.TextMarshaler. Where string are transformed to
+// uppercase and are left aligned in the CNAB space, booleans are represented as
+// 1 or 0, numbers are right aligned with zeros and float decimal separators are
+// removed.
+//
+// When only one parameter is given the generated CNAB line will only have break
+// line symbols if the input is a slice of struct. When using multiple
+// parameters the library determinate that you are trying to build the full CNAB
+// file, so it add the breaking lines and the final control symbol.
 func Marshal240(vs ...interface{}) ([]byte, error) {
 	return marshal(240, vs...)
 }
 
-// Marshal400 returns the CNAB 400 encoding of vs.
+// Marshal400 returns the CNAB 400 encoding of vs. The accepted types are struct
+// and slice of struct, where only the exported struct fields with the tag
+// "cnab" are going to be used. Invalid cnab tag ranges will generate errors.
+//
+// The following struct field types are supported: string, bool, int, int8,
+// int16, int32, int64, uint, uint8, uint16, uint23, uint64, float32, float64,
+// gocnab.Marshaler and encoding.TextMarshaler. Where string are transformed to
+// uppercase and are left aligned in the CNAB space, booleans are represented as
+// 1 or 0, numbers are right aligned with zeros and float decimal separators are
+// removed.
+//
+// When only one parameter is given the generated CNAB line will only have break
+// line symbols if the input is a slice of struct. When using multiple
+// parameters the library determinate that you are trying to build the full CNAB
+// file, so it add the breaking lines and the final control symbol.
 func Marshal400(vs ...interface{}) ([]byte, error) {
 	return marshal(400, vs...)
 }
@@ -215,7 +243,30 @@ func setFieldContent(data []byte, fieldContent string, begin, end int) {
 }
 
 // Unmarshal parses the CNAB-encoded data and stores the result in the value
-// pointed to by v.
+// pointed to by v. Accepted types of v are: *struct, *[]struct or
+// map[string]interface{}.
+//
+// The following struct field types are supported: string, bool, int, int8,
+// int16, int32, int64, uint, uint8, uint16, uint23, uint64, float32, float64,
+// gocnab.Unmarshaler and encoding.TextUnmarshaler.
+//
+// When parsing a full CNAB file we recommend using the map type (mapper) to
+// fill different lines into the correct types. Usually the CNAB prefix
+// determinate the type used, so the mapper key will be the prefix, and the
+// mapper value is the pointer to the type that you're filling. For example, if
+// we have a CNAB file where the starter character determinate the type, and for
+// "0" is header, "1" is the content line and "2" is the footer, we could have
+// the following code to unmarshal:
+//
+//     header := struct{ A int `cnab:1,10` }{}
+//     content := []struct{ B string `cnab:1,10` }{}
+//     footer := struct{ C bool `cnab:1,2` }{}
+//
+//     cnab.Unmarshal(data, map[string]interface{}{
+//       "0": &header,
+//       "1": &content,
+//       "2": &footer,
+//     })
 func Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
 	if (rv.Kind() != reflect.Ptr && rv.Kind() != reflect.Map) || rv.IsNil() {
