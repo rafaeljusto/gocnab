@@ -13,10 +13,12 @@ import (
 )
 
 // LineBreak defines the control characters at the end of each registry entry.
-// It should be the hex encoded 0D0A except for the last one that should be the
-// hex encoded 1A, but as we don't known if it is really the last line we will
-// let the library user to add it manually.
+// It should be the hex encoded 0D0A except for the last one.
 const LineBreak = "\r\n"
+
+// FinalControlCharacter defines the control character of the last registry
+// entry. It should be the hex encoded 1A.
+const FinalControlCharacter = "\x1A"
 
 var (
 	// ErrUnsupportedType raised when trying to marshal something different from a
@@ -38,75 +40,104 @@ var (
 	ErrInvalidFieldTagRange = errors.New("invalid range in cnab tag")
 )
 
-// Marshal240 returns the CNAB 240 encoding of v.
-func Marshal240(v interface{}) ([]byte, error) {
+// Marshal240 returns the CNAB 240 encoding of vs. The accepted types are struct
+// and slice of struct, where only the exported struct fields with the tag
+// "cnab" are going to be used. Invalid cnab tag ranges will generate errors.
+//
+// The following struct field types are supported: string, bool, int, int8,
+// int16, int32, int64, uint, uint8, uint16, uint23, uint64, float32, float64,
+// gocnab.Marshaler and encoding.TextMarshaler. Where string are transformed to
+// uppercase and are left aligned in the CNAB space, booleans are represented as
+// 1 or 0, numbers are right aligned with zeros and float decimal separators are
+// removed.
+//
+// When only one parameter is given the generated CNAB line will only have break
+// line symbols if the input is a slice of struct. When using multiple
+// parameters the library determinate that you are trying to build the full CNAB
+// file, so it add the breaking lines and the final control symbol.
+func Marshal240(vs ...interface{}) ([]byte, error) {
+	return marshal(240, vs...)
+}
+
+// Marshal400 returns the CNAB 400 encoding of vs. The accepted types are struct
+// and slice of struct, where only the exported struct fields with the tag
+// "cnab" are going to be used. Invalid cnab tag ranges will generate errors.
+//
+// The following struct field types are supported: string, bool, int, int8,
+// int16, int32, int64, uint, uint8, uint16, uint23, uint64, float32, float64,
+// gocnab.Marshaler and encoding.TextMarshaler. Where string are transformed to
+// uppercase and are left aligned in the CNAB space, booleans are represented as
+// 1 or 0, numbers are right aligned with zeros and float decimal separators are
+// removed.
+//
+// When only one parameter is given the generated CNAB line will only have break
+// line symbols if the input is a slice of struct. When using multiple
+// parameters the library determinate that you are trying to build the full CNAB
+// file, so it add the breaking lines and the final control symbol.
+func Marshal400(vs ...interface{}) ([]byte, error) {
+	return marshal(400, vs...)
+}
+
+func marshal(lineSize int, vs ...interface{}) ([]byte, error) {
+	var cnab []byte
+
+	for i, v := range vs {
+		cnabLine, err := marshalLine(lineSize, v)
+		if err != nil {
+			return nil, err
+		}
+
+		cnab = append(cnab, cnabLine...)
+
+		// don't add line break symbol to the last line
+		if len(vs) > 1 && i < len(vs)-1 {
+			cnab = append(cnab, []byte(LineBreak)...)
+		}
+	}
+
+	if len(vs) > 1 && cnab != nil {
+		cnab = append(cnab, []byte(FinalControlCharacter)...)
+	}
+
+	return cnab, nil
+}
+
+func marshalLine(lineSize int, v interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(v)
 
 	switch rv.Kind() {
 	case reflect.Struct:
-		cnab240 := []byte(strings.Repeat(" ", 240))
-		err := marshal(cnab240, rv)
-		return cnab240, err
+		cnab := []byte(strings.Repeat(" ", lineSize))
+		if err := marshalStruct(cnab, rv); err != nil {
+			return nil, err
+		}
+
+		return cnab, nil
 
 	case reflect.Slice:
-		var cnab240 []byte
+		var cnab []byte
 
 		for i := 0; i < rv.Len(); i++ {
-			cnab240Line := []byte(strings.Repeat(" ", 240))
-			err := marshal(cnab240Line, rv.Index(i))
-			if err != nil {
+			line := []byte(strings.Repeat(" ", lineSize))
+			if err := marshalStruct(line, rv.Index(i)); err != nil {
 				return nil, err
 			}
 
-			cnab240 = append(cnab240, cnab240Line...)
+			cnab = append(cnab, line...)
 
 			// don't add line break symbol to the last line
 			if i < rv.Len()-1 {
-				cnab240 = append(cnab240, []byte(LineBreak)...)
+				cnab = append(cnab, []byte(LineBreak)...)
 			}
 		}
 
-		return cnab240, nil
+		return cnab, nil
 	}
 
 	return nil, ErrUnsupportedType
 }
 
-// Marshal400 returns the CNAB 400 encoding of v.
-func Marshal400(v interface{}) ([]byte, error) {
-	rv := reflect.ValueOf(v)
-
-	switch rv.Kind() {
-	case reflect.Struct:
-		cnab400 := []byte(strings.Repeat(" ", 400))
-		err := marshal(cnab400, rv)
-		return cnab400, err
-
-	case reflect.Slice:
-		var cnab400 []byte
-
-		for i := 0; i < rv.Len(); i++ {
-			cnab400Line := []byte(strings.Repeat(" ", 400))
-			err := marshal(cnab400Line, rv.Index(i))
-			if err != nil {
-				return nil, err
-			}
-
-			cnab400 = append(cnab400, cnab400Line...)
-
-			// don't add line break symbol to the last line
-			if i < rv.Len()-1 {
-				cnab400 = append(cnab400, []byte(LineBreak)...)
-			}
-		}
-
-		return cnab400, nil
-	}
-
-	return nil, ErrUnsupportedType
-}
-
-func marshal(data []byte, v reflect.Value) error {
+func marshalStruct(data []byte, v reflect.Value) error {
 	structType := v.Type()
 	for i := 0; i < structType.NumField(); i++ {
 		structField := structType.Field(i)
@@ -212,46 +243,110 @@ func setFieldContent(data []byte, fieldContent string, begin, end int) {
 }
 
 // Unmarshal parses the CNAB-encoded data and stores the result in the value
-// pointed to by v.
+// pointed to by v. Accepted types of v are: *struct, *[]struct or
+// map[string]interface{}.
+//
+// The following struct field types are supported: string, bool, int, int8,
+// int16, int32, int64, uint, uint8, uint16, uint23, uint64, float32, float64,
+// gocnab.Unmarshaler and encoding.TextUnmarshaler.
+//
+// When parsing a full CNAB file we recommend using the map type (mapper) to
+// fill different lines into the correct types. Usually the CNAB prefix
+// determinate the type used, so the mapper key will be the prefix, and the
+// mapper value is the pointer to the type that you're filling. For example, if
+// we have a CNAB file where the starter character determinate the type, and for
+// "0" is header, "1" is the content line (can repeat many times) and "2" is the
+// footer, we could have the following code to unmarshal:
+//
+//     header := struct{ A int `cnab:1,10` }{}
+//     content := []struct{ B string `cnab:1,10` }{}
+//     footer := struct{ C bool `cnab:1,2` }{}
+//
+//     cnab.Unmarshal(data, map[string]interface{}{
+//       "0": &header,
+//       "1": &content,
+//       "2": &footer,
+//     })
 func Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
-	if rv.Kind() != reflect.Ptr || rv.IsNil() {
+	if (rv.Kind() != reflect.Ptr && rv.Kind() != reflect.Map) || rv.IsNil() {
 		return ErrUnsupportedType
 	}
 
-	rvElem := rv.Elem()
+	if rv.Kind() == reflect.Ptr {
+		rvElem := rv.Elem()
 
-	switch rvElem.Kind() {
-	case reflect.Struct:
-		return unmarshal(data, rvElem)
+		switch rvElem.Kind() {
+		case reflect.Struct:
+			return unmarshalStruct(data, rvElem)
 
-	case reflect.Slice:
-		sliceType := rvElem.Type().Elem()
-		if sliceType.Kind() != reflect.Struct {
-			return ErrUnsupportedType
+		case reflect.Slice:
+			return unmarshalSlice(data, rvElem)
 		}
+	}
 
-		cnabLines := bytes.Split(data, []byte(LineBreak))
-		for _, cnabLine := range cnabLines {
-			if len(cnabLine) == 0 {
-				continue
-			}
-
-			itemValue := reflect.New(sliceType)
-			if err := unmarshal(cnabLine, itemValue.Elem()); err != nil {
-				return err
-			}
-
-			rvElem.Set(reflect.Append(rvElem, itemValue.Elem()))
-		}
-
-		return nil
+	if mapper, ok := v.(map[string]interface{}); ok {
+		return unmarshalMapper(data, mapper)
 	}
 
 	return ErrUnsupportedType
 }
 
-func unmarshal(data []byte, v reflect.Value) error {
+func unmarshalMapper(data []byte, mapper map[string]interface{}) error {
+	cnabLinesGroupBy := make(map[string][]byte)
+	cnabLines := bytes.Split(data, []byte(LineBreak))
+
+	for _, cnabLine := range cnabLines {
+		if len(cnabLine) == 0 {
+			continue
+		}
+
+		for id := range mapper {
+			if !bytes.HasPrefix(cnabLine, []byte(id)) {
+				continue
+			}
+
+			if _, ok := cnabLinesGroupBy[id]; ok {
+				cnabLinesGroupBy[id] = append(cnabLinesGroupBy[id], []byte(LineBreak)...)
+			}
+
+			cnabLinesGroupBy[id] = append(cnabLinesGroupBy[id], cnabLine...)
+		}
+	}
+
+	for id, lines := range cnabLinesGroupBy {
+		if err := Unmarshal(lines, mapper[id]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func unmarshalSlice(data []byte, v reflect.Value) error {
+	sliceType := v.Type().Elem()
+	if sliceType.Kind() != reflect.Struct {
+		return ErrUnsupportedType
+	}
+
+	cnabLines := bytes.Split(data, []byte(LineBreak))
+	for _, cnabLine := range cnabLines {
+		if len(cnabLine) == 0 {
+			continue
+		}
+
+		itemValue := reflect.New(sliceType)
+		if err := unmarshalStruct(cnabLine, itemValue.Elem()); err != nil {
+			return err
+		}
+
+		v.Set(reflect.Append(v, itemValue.Elem()))
+	}
+
+	return nil
+}
+
+func unmarshalStruct(data []byte, v reflect.Value) error {
 	structType := v.Type()
 	for i := 0; i < structType.NumField(); i++ {
 		structField := structType.Field(i)
