@@ -255,8 +255,8 @@ func setFieldContent(data []byte, fieldContent string, begin, end int) {
 // determinate the type used, so the mapper key will be the prefix, and the
 // mapper value is the pointer to the type that you're filling. For example, if
 // we have a CNAB file where the starter character determinate the type, and for
-// "0" is header, "1" is the content line and "2" is the footer, we could have
-// the following code to unmarshal:
+// "0" is header, "1" is the content line (can repeat many times) and "2" is the
+// footer, we could have the following code to unmarshal:
 //
 //     header := struct{ A int `cnab:1,10` }{}
 //     content := []struct{ B string `cnab:1,10` }{}
