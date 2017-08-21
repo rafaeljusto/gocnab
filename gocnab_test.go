@@ -1267,17 +1267,19 @@ func ExampleMarshal240() {
 
 func ExampleMarshal240_fullFile() {
 	header := struct {
-		HeaderA int `cnab:"0,5"`
+		Identifier string `cnab:"0,1"`
+		HeaderA    int    `cnab:"1,5"`
 	}{
 		HeaderA: 2,
 	}
 
 	content := []struct {
-		FieldA int     `cnab:"0,20"`
-		FieldB string  `cnab:"20,50"`
-		FieldC float64 `cnab:"50,60"`
-		FieldD uint    `cnab:"60,70"`
-		FieldE bool    `cnab:"70,71"`
+		Identifier string  `cnab:"0,1"`
+		FieldA     int     `cnab:"1,20"`
+		FieldB     string  `cnab:"20,50"`
+		FieldC     float64 `cnab:"50,60"`
+		FieldD     uint    `cnab:"60,70"`
+		FieldE     bool    `cnab:"70,71"`
 	}{
 		{
 			FieldA: 123,
@@ -1296,7 +1298,8 @@ func ExampleMarshal240_fullFile() {
 	}
 
 	footer := struct {
-		FooterA string `cnab:"5,30"`
+		Identifier string `cnab:"0,1"`
+		FooterA    string `cnab:"5,30"`
 	}{
 		FooterA: "Final text",
 	}
@@ -1329,17 +1332,19 @@ func ExampleMarshal400() {
 
 func ExampleMarshal400_fullFile() {
 	header := struct {
-		HeaderA int `cnab:"0,5"`
+		Identifier string `cnab:"0,1"`
+		HeaderA    int    `cnab:"1,5"`
 	}{
 		HeaderA: 2,
 	}
 
 	content := []struct {
-		FieldA int     `cnab:"0,20"`
-		FieldB string  `cnab:"20,50"`
-		FieldC float64 `cnab:"50,60"`
-		FieldD uint    `cnab:"60,70"`
-		FieldE bool    `cnab:"70,71"`
+		Identifier string  `cnab:"0,1"`
+		FieldA     int     `cnab:"1,20"`
+		FieldB     string  `cnab:"20,50"`
+		FieldC     float64 `cnab:"50,60"`
+		FieldD     uint    `cnab:"60,70"`
+		FieldE     bool    `cnab:"70,71"`
 	}{
 		{
 			FieldA: 123,
@@ -1358,7 +1363,8 @@ func ExampleMarshal400_fullFile() {
 	}
 
 	footer := struct {
-		FooterA string `cnab:"5,30"`
+		Identifier string `cnab:"0,1"`
+		FooterA    string `cnab:"5,30"`
 	}{
 		FooterA: "Final text",
 	}

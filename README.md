@@ -13,8 +13,9 @@ gocnab implements encoding and decoding of CNAB (Centro Nacional de Automação
 Bancária) data as defined by [FEBRABAN](https://www.febraban.org.br/).
 
 When marshaling it is possible to inform a struct, that will generate 1 CNAB
-line, or a slice of structs to generate multiple CNAB lines. On unmarshal a
-pointer to a struct or a slice of structs should be used.
+line, or a slice of struct to generate multiple CNAB lines. On unmarshal a
+pointer to a struct, a pointer to a slice of struct or a mapper
+(`map[string]interface{}` for a full CNAB file) should be used.
 
 The library use struct tags to define the position of the field in the CNAB
 content `[begin,end)`. It supports the basic attribute types `string` (uppercase
@@ -31,6 +32,8 @@ go get -u github.com/rafaeljusto/gocnab
 ```
 
 ## Usage
+
+For working with only a single line of the CNAB file:
 
 ```go
 package main
@@ -67,5 +70,88 @@ func main() {
 	}
 
 	println(e1 == e2)
+}
+```
+
+And for the whole CNAB file:
+
+```go
+package main
+
+import "github.com/rafaeljusto/gocnab"
+
+type header struct {
+	Identifier string `cnab:"0,1"`
+	HeaderA    int    `cnab:"1,5"`
+}
+
+type content struct {
+	Identifier string  `cnab:"0,1"`
+	FieldA     int     `cnab:"1,20"`
+	FieldB     string  `cnab:"20,50"`
+	FieldC     float64 `cnab:"50,60"`
+	FieldD     uint    `cnab:"60,70"`
+	FieldE     bool    `cnab:"70,71"`
+}
+
+type footer struct {
+	Identifier string `cnab:"0,1"`
+	FooterA    string `cnab:"5,30"`
+}
+
+func main() {
+	h1 := header{
+		Identifier: "0",
+		HeaderA:    2,
+	}
+
+	c1 := []content{
+		{
+			Identifier: "1",
+			FieldA:     123,
+			FieldB:     "THIS IS A TEXT",
+			FieldC:     50.30,
+			FieldD:     445,
+			FieldE:     true,
+		},
+		{
+			Identifier: "1",
+			FieldA:     321,
+			FieldB:     "THIS IS ANOTHER TEXT",
+			FieldC:     30.50,
+			FieldD:     544,
+			FieldE:     false,
+		},
+	}
+
+	f1 := footer{
+		Identifier: "2",
+		FooterA:    "FINAL TEXT",
+	}
+
+	data, err := gocnab.Marshal400(h1, c1, f1)
+	if err != nil {
+		println(err)
+		return
+	}
+
+	var h2 header
+	var c2 []content
+	var f2 footer
+
+	if err = gocnab.Unmarshal(data, map[string]interface{}{
+		"0": &h2,
+		"1": &c2,
+		"2": &f2,
+	}); err != nil {
+		println(err)
+		return
+	}
+
+	println(h1 == h2)
+	for i := range c1 {
+		println(c1[i] == c2[i])
+	}
+	println(f1 == f2)
 }
 ```
