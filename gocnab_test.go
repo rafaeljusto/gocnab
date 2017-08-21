@@ -749,8 +749,8 @@ func TestUnmarshal(t *testing.T) {
 			},
 		},
 		{
-			description: "it should unmarshal to a mapper correctly",
-			data: []byte(fmt.Sprintf("0%019d%-30s%10s%010d0000000000%-30s%-30s%100s\r\n1%019d%-30s%10s%010d1000000000%-30s%-30s%100s\r\n1%019d%-30s%10s%010d0000000001%-30s%-30s%100s\x1a",
+			description: "it should unmarshal to a mapper correctly (ignoring empty lines)",
+			data: []byte(fmt.Sprintf("0%019d%-30s%10s%010d0000000000%-30s%-30s%100s\r\n\r\n1%019d%-30s%10s%010d1000000000%-30s%-30s%100s\r\n1%019d%-30s%10s%010d0000000001%-30s%-30s%100s\x1a",
 				111, "THIS IS SOMETHING", strings.Replace(fmt.Sprintf("0%010.2f", 77.70), ".", "", -1), 45, "HELLO 1", "HELLO 2", "",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
@@ -1065,6 +1065,32 @@ func TestUnmarshal(t *testing.T) {
 				Field: "FieldA",
 				Data:  []byte("X"),
 				Err:   gocnab.ErrUnsupportedType,
+			},
+		},
+		{
+			description: "it should detect an error while unmarshal to a mapper",
+			data: []byte(fmt.Sprintf("0%019d%-30s%10s%010d0000000000%-30s%-30s%100s\r\n\r\n1%019d%-30s%10s%010d1000000000%-30s%-30s%100s\r\n1%019d%-30s%10s%010d0000000001%-30s%-30s%100s\x1a",
+				111, "THIS IS SOMETHING", strings.Replace(fmt.Sprintf("0%010.2f", 77.70), ".", "", -1), 45, "HELLO 1", "HELLO 2", "",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
+			v: map[string]interface{}{
+				"0": &struct {
+					FieldB int `cnab:"20,50"`
+				}{},
+			},
+			expected: map[string]interface{}{
+				"0": &struct {
+					FieldB int `cnab:"20,50"`
+				}{},
+			},
+			expectedError: gocnab.UnmarshalFieldError{
+				Field: "FieldB",
+				Data:  []byte("THIS IS SOMETHING             "),
+				Err: &strconv.NumError{
+					Func: "ParseInt",
+					Num:  "THIS IS SOMETHING",
+					Err:  strconv.ErrSyntax,
+				},
 			},
 		},
 	}
