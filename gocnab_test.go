@@ -1705,7 +1705,10 @@ func ExampleUnmarshal() {
 	}
 
 	data := []byte("00000000000000000123THIS IS A TEXT                000000503000000004451")
-	gocnab.Unmarshal(data, &e)
+	if err := gocnab.Unmarshal(data, &e); err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	fmt.Printf("%v\n", e)
 	// Output: {123 THIS IS A TEXT 50.3 445 true}
@@ -1736,11 +1739,15 @@ func ExampleUnmarshal_fullFile() {
 		"10000000000000000321THIS IS A TEXT 2              000000305000000005440" + gocnab.LineBreak +
 		"2    THIS IS THE FOOTER            " + gocnab.FinalControlCharacter)
 
-	gocnab.Unmarshal(data, map[string]interface{}{
+	err := gocnab.Unmarshal(data, map[string]interface{}{
 		"0": &header,
 		"1": &content,
 		"2": &footer,
 	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	fmt.Printf("%v\n%v\n%v\n", header, content, footer)
 	// Output: {0 5}
