@@ -78,6 +78,25 @@ func Marshal400(vs ...interface{}) ([]byte, error) {
 	return marshal(400, vs...)
 }
 
+// Marshal500 returns the CNAB 500 encoding of vs. The accepted types are struct
+// and slice of struct, where only the exported struct fields with the tag
+// "cnab" are going to be used. Invalid cnab tag ranges will generate errors.
+//
+// The following struct field types are supported: string, bool, int, int8,
+// int16, int32, int64, uint, uint8, uint16, uint23, uint64, float32, float64,
+// gocnab.Marshaler and encoding.TextMarshaler. Where string are transformed to
+// uppercase and are left aligned in the CNAB space, booleans are represented as
+// 1 or 0, numbers are right aligned with zeros and float decimal separators are
+// removed.
+//
+// When only one parameter is given the generated CNAB line will only have break
+// line symbols if the input is a slice of struct. When using multiple
+// parameters the library determinate that you are trying to build the full CNAB
+// file, so it add the breaking lines and the final control symbol.
+func Marshal500(vs ...interface{}) ([]byte, error) {
+	return marshal(500, vs...)
+}
+
 func marshal(lineSize int, vs ...interface{}) ([]byte, error) {
 	var cnab []byte
 
