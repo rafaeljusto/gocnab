@@ -179,6 +179,85 @@ func TestMarshal240(t *testing.T) {
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
 		},
 		{
+			description: "it should create a full CNAB240 correctly from multiple inputs, without final control character",
+			vs: []interface{}{
+				struct {
+					Identifier int         `cnab:"0,1"`
+					FieldA     int         `cnab:"1,20"`
+					FieldB     string      `cnab:"20,50"`
+					FieldC     float64     `cnab:"50,60"`
+					FieldD     uint        `cnab:"60,70"`
+					FieldE     bool        `cnab:"70,71"`
+					FieldF     bool        `cnab:"71,80"`
+					FieldG     customType1 `cnab:"80,110"`
+					FieldH     customType2 `cnab:"110,140"`
+					FieldI     time.Time   // should ignore fields without CNAB tag
+				}{
+					Identifier: 0,
+					FieldA:     111,
+					FieldB:     "This is something",
+					FieldC:     77.70,
+					FieldD:     45,
+					FieldE:     false,
+					FieldF:     false,
+					FieldG: customType1(func() ([]byte, error) {
+						return []byte("Hello 1"), nil
+					}),
+					FieldH: customType2(func() ([]byte, error) {
+						return []byte("Hello 2"), nil
+					}),
+				},
+				[]struct {
+					Identifier int         `cnab:"0,1"`
+					FieldA     int         `cnab:"1,20"`
+					FieldB     string      `cnab:"20,50"`
+					FieldC     float64     `cnab:"50,60"`
+					FieldD     uint        `cnab:"60,70"`
+					FieldE     bool        `cnab:"70,71"`
+					FieldF     bool        `cnab:"71,80"`
+					FieldG     customType1 `cnab:"80,110"`
+					FieldH     customType2 `cnab:"110,140"`
+					FieldI     time.Time   // should ignore fields without CNAB tag
+				}{
+					{
+						Identifier: 1,
+						FieldA:     123,
+						FieldB:     "This is a test with a long text to check if the strip is working well",
+						FieldC:     50.30,
+						FieldD:     445,
+						FieldE:     true,
+						FieldF:     false,
+						FieldG: customType1(func() ([]byte, error) {
+							return []byte("This is a custom type test 1"), nil
+						}),
+						FieldH: customType2(func() ([]byte, error) {
+							return []byte("This is a custom type test 2"), nil
+						}),
+					},
+					{
+						Identifier: 1,
+						FieldA:     321,
+						FieldB:     "This is another test",
+						FieldC:     30.50,
+						FieldD:     644,
+						FieldE:     false,
+						FieldF:     true,
+						FieldG: customType1(func() ([]byte, error) {
+							return []byte("This is a custom type test 3"), nil
+						}),
+						FieldH: customType2(func() ([]byte, error) {
+							return []byte("This is a custom type test 4"), nil
+						}),
+					},
+				},
+				gocnab.WithFinalControlCharacter(false),
+			},
+			expected: []byte(fmt.Sprintf("0%019d%-30s%10s%010d0000000000%-30s%-30s%100s\r\n1%019d%-30s%10s%010d1000000000%-30s%-30s%100s\r\n1%019d%-30s%10s%010d0000000001%-30s%-30s%100s",
+				111, "THIS IS SOMETHING", strings.Replace(fmt.Sprintf("0%010.2f", 77.70), ".", "", -1), 45, "HELLO 1", "HELLO 2", "",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
+		},
+		{
 			description: "it should detect an invalid field format",
 			vs: []interface{}{
 				struct {
@@ -485,6 +564,80 @@ func TestMarshal400(t *testing.T) {
 				},
 			},
 			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d0000000000%-30s%-30s%260s\r\n%020d%-30s%10s%010d1000000000%-30s%-30s%260s\r\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s\x1a",
+				111, "THIS IS SOMETHING", strings.Replace(fmt.Sprintf("0%010.2f", 77.70), ".", "", -1), 45, "HELLO 1", "HELLO 2", "",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
+		},
+		{
+			description: "it should create a full CNAB400 correctly from multiple inputs, without final control character",
+			vs: []interface{}{
+				struct {
+					FieldA int         `cnab:"0,20"`
+					FieldB string      `cnab:"20,50"`
+					FieldC float64     `cnab:"50,60"`
+					FieldD uint        `cnab:"60,70"`
+					FieldE bool        `cnab:"70,71"`
+					FieldF bool        `cnab:"71,80"`
+					FieldG customType1 `cnab:"80,110"`
+					FieldH customType2 `cnab:"110,140"`
+					FieldI time.Time   // should ignore fields without CNAB tag
+				}{
+					FieldA: 111,
+					FieldB: "This is something",
+					FieldC: 77.70,
+					FieldD: 45,
+					FieldE: false,
+					FieldF: false,
+					FieldG: customType1(func() ([]byte, error) {
+						return []byte("Hello 1"), nil
+					}),
+					FieldH: customType2(func() ([]byte, error) {
+						return []byte("Hello 2"), nil
+					}),
+				},
+				[]struct {
+					FieldA int         `cnab:"0,20"`
+					FieldB string      `cnab:"20,50"`
+					FieldC float64     `cnab:"50,60"`
+					FieldD uint        `cnab:"60,70"`
+					FieldE bool        `cnab:"70,71"`
+					FieldF bool        `cnab:"71,80"`
+					FieldG customType1 `cnab:"80,110"`
+					FieldH customType2 `cnab:"110,140"`
+					FieldI time.Time   // should ignore fields without CNAB tag
+				}{
+					{
+						FieldA: 123,
+						FieldB: "This is a test with a long text to check if the strip is working well",
+						FieldC: 50.30,
+						FieldD: 445,
+						FieldE: true,
+						FieldF: false,
+						FieldG: customType1(func() ([]byte, error) {
+							return []byte("This is a custom type test 1"), nil
+						}),
+						FieldH: customType2(func() ([]byte, error) {
+							return []byte("This is a custom type test 2"), nil
+						}),
+					},
+					{
+						FieldA: 321,
+						FieldB: "This is another test",
+						FieldC: 30.50,
+						FieldD: 644,
+						FieldE: false,
+						FieldF: true,
+						FieldG: customType1(func() ([]byte, error) {
+							return []byte("This is a custom type test 3"), nil
+						}),
+						FieldH: customType2(func() ([]byte, error) {
+							return []byte("This is a custom type test 4"), nil
+						}),
+					},
+				},
+				gocnab.WithFinalControlCharacter(false),
+			},
+			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d0000000000%-30s%-30s%260s\r\n%020d%-30s%10s%010d1000000000%-30s%-30s%260s\r\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s",
 				111, "THIS IS SOMETHING", strings.Replace(fmt.Sprintf("0%010.2f", 77.70), ".", "", -1), 45, "HELLO 1", "HELLO 2", "",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "",
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "")),
@@ -806,6 +959,85 @@ func TestMarshal500(t *testing.T) {
 				},
 			},
 			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d0000000000%-30s%-30s%260s%100s\r\n%020d%-30s%10s%010d1000000000%-30s%-30s%260s%100s\r\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s%100s\x1a",
+				111, "THIS IS SOMETHING", strings.Replace(fmt.Sprintf("0%010.2f", 77.70), ".", "", -1), 45, "HELLO 1", "HELLO 2", "", "T",
+				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "", "U",
+				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "", "V")),
+		},
+		{
+			description: "it should create a full CNAB500 correctly from multiple inputs, without final control character",
+			vs: []interface{}{
+				struct {
+					FieldA int         `cnab:"0,20"`
+					FieldB string      `cnab:"20,50"`
+					FieldC float64     `cnab:"50,60"`
+					FieldD uint        `cnab:"60,70"`
+					FieldE bool        `cnab:"70,71"`
+					FieldF bool        `cnab:"71,80"`
+					FieldG customType1 `cnab:"80,110"`
+					FieldH customType2 `cnab:"110,140"`
+					FieldI time.Time   // should ignore fields without CNAB tag
+					FieldJ string      `cnab:"499,500"`
+				}{
+					FieldA: 111,
+					FieldB: "This is something",
+					FieldC: 77.70,
+					FieldD: 45,
+					FieldE: false,
+					FieldF: false,
+					FieldG: customType1(func() ([]byte, error) {
+						return []byte("Hello 1"), nil
+					}),
+					FieldH: customType2(func() ([]byte, error) {
+						return []byte("Hello 2"), nil
+					}),
+					FieldJ: "T",
+				},
+				[]struct {
+					FieldA int         `cnab:"0,20"`
+					FieldB string      `cnab:"20,50"`
+					FieldC float64     `cnab:"50,60"`
+					FieldD uint        `cnab:"60,70"`
+					FieldE bool        `cnab:"70,71"`
+					FieldF bool        `cnab:"71,80"`
+					FieldG customType1 `cnab:"80,110"`
+					FieldH customType2 `cnab:"110,140"`
+					FieldI time.Time   // should ignore fields without CNAB tag
+					FieldJ string      `cnab:"499,500"`
+				}{
+					{
+						FieldA: 123,
+						FieldB: "This is a test with a long text to check if the strip is working well",
+						FieldC: 50.30,
+						FieldD: 445,
+						FieldE: true,
+						FieldF: false,
+						FieldG: customType1(func() ([]byte, error) {
+							return []byte("This is a custom type test 1"), nil
+						}),
+						FieldH: customType2(func() ([]byte, error) {
+							return []byte("This is a custom type test 2"), nil
+						}),
+						FieldJ: "U",
+					},
+					{
+						FieldA: 321,
+						FieldB: "This is another test",
+						FieldC: 30.50,
+						FieldD: 644,
+						FieldE: false,
+						FieldF: true,
+						FieldG: customType1(func() ([]byte, error) {
+							return []byte("This is a custom type test 3"), nil
+						}),
+						FieldH: customType2(func() ([]byte, error) {
+							return []byte("This is a custom type test 4"), nil
+						}),
+						FieldJ: "V",
+					},
+				},
+				gocnab.WithFinalControlCharacter(false),
+			},
+			expected: []byte(fmt.Sprintf("%020d%-30s%10s%010d0000000000%-30s%-30s%260s%100s\r\n%020d%-30s%10s%010d1000000000%-30s%-30s%260s%100s\r\n%020d%-30s%10s%010d0000000001%-30s%-30s%260s%100s",
 				111, "THIS IS SOMETHING", strings.Replace(fmt.Sprintf("0%010.2f", 77.70), ".", "", -1), 45, "HELLO 1", "HELLO 2", "", "T",
 				123, "THIS IS A TEST WITH A LONG TEX", strings.Replace(fmt.Sprintf("0%010.2f", 50.30), ".", "", -1), 445, "THIS IS A CUSTOM TYPE TEST 1", "THIS IS A CUSTOM TYPE TEST 2", "", "U",
 				321, "THIS IS ANOTHER TEST", strings.Replace(fmt.Sprintf("0%010.2f", 30.50), ".", "", -1), 644, "THIS IS A CUSTOM TYPE TEST 3", "THIS IS A CUSTOM TYPE TEST 4", "", "V")),
