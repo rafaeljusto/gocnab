@@ -40,6 +40,31 @@ var (
 	ErrInvalidFieldTagRange = errors.New("invalid range in cnab tag")
 )
 
+// MarshalOptions contains available options when marshaling. The properties can
+// be modified using auxiliary functions directly into the marshal calls.
+//
+// Example:
+//     Marshal240(myCNABType, gocnab.WithFinalControlCharacter(false))
+type MarshalOptions struct {
+	addFinalControlCharacter bool
+}
+
+// MarshalOptionFunc helper type alias to handle options.
+type MarshalOptionFunc func(*MarshalOptions)
+
+// WithFinalControlCharacter allows to enable or disable the final control
+// character. The first version of this library was designed to build valid CNAB
+// files for Bradesco bank, and one of Bradesco's requirements was to contain
+// the final control hexadecimal character 1A. But as this library started being
+// used by other integrations, the final control character became an issue, as
+// it doesn't comply with other specifications. By default, the final control
+// character is added to keep backward compatibility.
+func WithFinalControlCharacter(enabled bool) MarshalOptionFunc {
+	return MarshalOptionFunc(func(options *MarshalOptions) {
+		options.addFinalControlCharacter = enabled
+	})
+}
+
 // Marshal240 returns the CNAB 240 encoding of vs. The accepted types are struct
 // and slice of struct, where only the exported struct fields with the tag
 // "cnab" are going to be used. Invalid cnab tag ranges will generate errors.
@@ -98,6 +123,20 @@ func Marshal500(vs ...interface{}) ([]byte, error) {
 }
 
 func marshal(lineSize int, vs ...interface{}) ([]byte, error) {
+	options := MarshalOptions{
+		addFinalControlCharacter: true,
+	}
+	var i int
+	for _, v := range vs {
+		if optFunc, ok := v.(MarshalOptionFunc); ok {
+			optFunc(&options)
+		} else {
+			vs[i] = v
+			i++
+		}
+	}
+	vs = vs[:i]
+
 	var cnab []byte
 
 	for i, v := range vs {
@@ -114,7 +153,7 @@ func marshal(lineSize int, vs ...interface{}) ([]byte, error) {
 		}
 	}
 
-	if len(vs) > 1 && cnab != nil {
+	if options.addFinalControlCharacter && len(vs) > 1 && cnab != nil {
 		cnab = append(cnab, []byte(FinalControlCharacter)...)
 	}
 
