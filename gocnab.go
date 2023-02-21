@@ -44,7 +44,8 @@ var (
 // be modified using auxiliary functions directly into the marshal calls.
 //
 // Example:
-//     Marshal240(myCNABType, gocnab.WithFinalControlCharacter(false))
+//
+//	Marshal240(myCNABType, gocnab.WithFinalControlCharacter(false))
 type MarshalOptions struct {
 	addFinalControlCharacter bool
 }
@@ -63,6 +64,10 @@ func WithFinalControlCharacter(enabled bool) MarshalOptionFunc {
 	return MarshalOptionFunc(func(options *MarshalOptions) {
 		options.addFinalControlCharacter = enabled
 	})
+}
+
+func Marshal150(vs ...interface{}) ([]byte, error) {
+	return marshal(150, vs...)
 }
 
 // Marshal240 returns the CNAB 240 encoding of vs. The accepted types are struct
@@ -316,15 +321,15 @@ func setFieldContent(data []byte, fieldContent string, begin, end int) {
 // "0" is header, "1" is the content line (can repeat many times) and "2" is the
 // footer, we could have the following code to unmarshal:
 //
-//     header := struct{ A int `cnab:1,10` }{}
-//     content := []struct{ B string `cnab:1,10` }{}
-//     footer := struct{ C bool `cnab:1,2` }{}
+//	header := struct{ A int `cnab:1,10` }{}
+//	content := []struct{ B string `cnab:1,10` }{}
+//	footer := struct{ C bool `cnab:1,2` }{}
 //
-//     cnab.Unmarshal(data, map[string]interface{}{
-//       "0": &header,
-//       "1": &content,
-//       "2": &footer,
-//     })
+//	cnab.Unmarshal(data, map[string]interface{}{
+//	  "0": &header,
+//	  "1": &content,
+//	  "2": &footer,
+//	})
 func Unmarshal(data []byte, v interface{}) error {
 	rv := reflect.ValueOf(v)
 	if (rv.Kind() != reflect.Ptr && rv.Kind() != reflect.Map) || rv.IsNil() {
